@@ -1,0 +1,275 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CLISH_MODULE xmlns="http://clish.sourceforge.net/XMLSchema" 
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+ xsi:schemaLocation="http://clish.sourceforge.net/XMLSchema
+                     http://clish.sourceforge.net/XMLSchema/clish.xsd">
+	<!--=======================================================-->
+
+<VIEW name="enable-view">
+
+	<!-- UPTIME -->
+	<COMMAND name="show uptime"	help="Show system uptime">
+		<ACTION>
+			system=`uptime | awk -F'( |,|:)+' '{if ($7=="min") m=$6; else {if ($7~/^day/) {d=$6;h=$8;m=$9} else {h=$6;m=$7}}} {print d+0,"days,",h+0,"hours,",m+0,"minutes."}'`
+			accel=`sudo accel-cmd show stat | grep uptime | sed 's/uptime\: //g' |  sed 's/\./:/g' | awk -F ':' '{print $1+0,"days,",$2+0,"hours,",$3+0,"minutes."}'`
+			echo "      System: $system"			
+			echo "   Accel-PPP: $accel"
+		</ACTION>
+	</COMMAND>
+
+
+	<!-- VERSION -->
+	<COMMAND name="show version"	help="Show system version">
+		<ACTION>
+		
+			info=`facter`
+			arc=`echo "$info" | grep ^hardwaremodel | sed 's/hardwaremodel => //g'`	
+			type=`echo "$info" | grep ^virtual | sed 's/virtual => //g'`	
+			vendor=`echo "$info" | grep ^manufacturer | sed 's/manufacturer => //g'`	
+			model=`echo "$info" | grep ^productname | sed 's/productname => //g'`	
+			serial=`echo "$info" | grep ^serialnumber | sed 's/serialnumber => //g'`	
+			uuid=`echo "$info" | grep ^uuid | sed 's/uuid => //g'`
+			cpu_count=`echo "$info" | grep ^physicalprocessorcount | sed 's/physicalprocessorcount => //g'`	
+			cpu_name=`echo "$info" | grep ^processor0 | sed 's/processor0 => //g'`	
+			cpu_cores=`echo "$info" | grep ^processorcount | sed 's/processorcount => //g'`			
+			os_family=`echo "$info" | grep ^osfamily | sed 's/osfamily => //g'`	
+			os_desc=`echo "$info" | grep ^lsbdistdescription | sed 's/lsbdistdescription => //g'`	
+			os_arc=`echo "$info" | grep ^rubyplatform | sed 's/rubyplatform => //g'`	
+
+			echo
+			echo "     Architecture:  $arc"
+			echo "      System type:  $type"
+			echo
+			echo "  Hardware vendor:  $vendor"
+			echo "   Hardware model:  $model"
+			echo "     Hardware S/N:  $serial"
+			echo "    Hardware UUID:  $uuid"
+			echo
+			echo "        OS Family:  $os_family"
+			echo "   OS Description:  $os_desc"
+			echo "  OS Architecture:  $os_arc"
+			echo			
+			echo "         CPU Name:  $cpu_name" 
+			echo "      CPU Sockets:  $cpu_count" 
+			echo "  CPU Total Cores:  $cpu_cores" 
+			echo ""
+			echo "        Copyright:  Danilo Cruz (danilo@plimtelecom.com.br)"
+			echo 
+					
+		</ACTION>
+	</COMMAND>
+
+
+	<COMMAND name="show ipoe" help="show accel-ppp status">
+	</COMMAND>		
+
+	<COMMAND name="show ipoe sessions" help="Show active server sessions">
+		<ACTION>
+			sudo accel-cmd show sessions ifname,username,calling-sid,ip,tx-bytes,rx-bytes,rate-limit,state,uptime
+		</ACTION>			
+	</COMMAND>	
+
+	<COMMAND name="show ipoe sessions count" help="Count active users">
+		<ACTION>
+			sudo accel-cmd show stat | grep -A 3 "ipoe:" | sed -e "1d"
+		</ACTION>
+	</COMMAND>	
+
+	<COMMAND name="show ipoe sessions ip"	help="Find active session user by IP Address">
+		<PARAM name="ip"	help="subscriber ip address"	ptype="IP_ADDR"/>
+		<ACTION>
+			sudo accel-cmd show sessions ifname,username,calling-sid,ip,tx-bytes,rx-bytes,rate-limit,state,uptime match ip ${ip}
+		</ACTION>
+	</COMMAND>
+ 
+
+	<COMMAND name="show log" help="Show logs of Accel-PPP"	lock="false" interrupt="true">
+		<PARAM name="file"				help=""											optional="false"	mode="switch"		ptype="SUBCOMMAND">
+			<PARAM name="accel"			help="Show log accel-ppp"						optional="false"	mode="subcommand"	ptype="SUBCOMMAND"/>										
+			<PARAM name="auth-fail" 	help="Show log authentication failed session"	optional="false"	mode="subcommand"	ptype="SUBCOMMAND"/>
+			<PARAM name="core"			help="Show log core module"						optional="false"	mode="subcommand"	ptype="SUBCOMMAND"/>							
+			<PARAM name="debug"			help="Show log debug"							optional="false"	mode="subcommand"	ptype="SUBCOMMAND"/>							
+			<PARAM name="emerg"			help="Show log emergency messages"				optional="false"	mode="subcommand"	ptype="SUBCOMMAND"/>										
+		</PARAM>
+
+		<PARAM name="type"				help=""											optional="true" 	mode="switch"		ptype="SUBCOMMAND">
+			<PARAM name="real-time"		help="Show log in Real-Time"					optional="false"	mode="subcommand"	ptype="SUBCOMMAND"/>										
+			<PARAM name="analyzer"		help="Analyzer log file (Default)"				optional="false"	mode="subcommand"	ptype="SUBCOMMAND"/>										
+		</PARAM>
+
+		<ACTION>		
+		
+			case "${file}" in
+				"accel")
+					file_name=`cat /etc/accel-ppp.conf | grep log-file= | sed 's/log-file=//g'`
+					;;
+				"auth-fail")
+					file_name=`cat /etc/accel-ppp.conf | grep log-fail-file= | sed 's/log-fail-file=//g'`
+					;;
+				"core")
+					file_name=`cat /etc/accel-ppp.conf | grep log-error= | sed 's/log-error=//g'`
+					;;
+				"debug")
+					file_name=`cat /etc/accel-ppp.conf | grep log-debug= | sed 's/log-debug=//g'`
+					;;
+				"emerg")
+					file_name=`cat /etc/accel-ppp.conf | grep log-emerg= | sed 's/log-emerg=//g'`
+					;;	
+			esac
+
+			<!-- TYPE DEFAULT  -->
+			if test -z "${type}"; then
+				sudo less -R -i "$file_name"
+				exit
+			fi
+			
+			
+			<!-- TYPE ANALYZER -->
+			if test "${type}" = "analyzer"; then
+				sudo less -R -i "$file_name"
+			fi				
+
+			<!-- TYPE REAL-TIME -->
+			if test "${type}" = "real-time"; then
+				sigexec sudo less -R -i +F "$file_name"
+			fi				
+
+		</ACTION>		
+	</COMMAND>
+	
+
+
+	<COMMAND name="clear log" help="Clear logs of Accel-PPP"	lock="false" interrupt="true">
+		<PARAM name="file"				help=""											optional="false"	mode="switch"		ptype="SUBCOMMAND">
+			<PARAM name="all"			help="Clear all logs accel-ppp"					optional="false"	mode="subcommand"	ptype="SUBCOMMAND"/>										
+			<PARAM name="accel"			help="Clear log accel-ppp"						optional="false"	mode="subcommand"	ptype="SUBCOMMAND"/>										
+			<PARAM name="auth-fail" 	help="Clear log authentication failed session"	optional="false"	mode="subcommand"	ptype="SUBCOMMAND"/>
+			<PARAM name="core"			help="Clear log core module"					optional="false"	mode="subcommand"	ptype="SUBCOMMAND"/>							
+			<PARAM name="debug"			help="Clear log debug"							optional="false"	mode="subcommand"	ptype="SUBCOMMAND"/>							
+			<PARAM name="emerg"			help="Clear log emergency messages"				optional="false"	mode="subcommand"	ptype="SUBCOMMAND"/>										
+		</PARAM>
+
+		<ACTION>		
+		
+			case "${file}" in
+				"accel")
+					file_name=`cat /etc/accel-ppp.conf | grep log-file= | sed 's/log-file=//g'`
+					;;
+				"auth-fail")
+					file_name=`cat /etc/accel-ppp.conf | grep log-fail-file= | sed 's/log-fail-file=//g'`
+					;;
+				"core")
+					file_name=`cat /etc/accel-ppp.conf | grep log-error= | sed 's/log-error=//g'`
+					;;
+				"debug")
+					file_name=`cat /etc/accel-ppp.conf | grep log-debug= | sed 's/log-debug=//g'`
+					;;
+				"emerg")
+					file_name=`cat /etc/accel-ppp.conf | grep log-emerg= | sed 's/log-emerg=//g'`
+					;;	
+			esac
+			
+			
+			<!-- CLEAR ALL FILES -->
+			if test "${file}" = "all"; then		
+				file_name1=`cat /etc/accel-ppp.conf | grep log-file= | sed 's/log-file=//g'`
+				file_name2=`cat /etc/accel-ppp.conf | grep log-fail-file= | sed 's/log-fail-file=//g'`
+				file_name3=`cat /etc/accel-ppp.conf | grep log-error= | sed 's/log-error=//g'`
+				file_name4=`cat /etc/accel-ppp.conf | grep log-debug= | sed 's/log-debug=//g'`	
+				file_name5=`cat /etc/accel-ppp.conf | grep log-emerg= | sed 's/log-emerg=//g'`
+				echo "" > "$file_name1"
+				echo "" > "$file_name2"
+				echo "" > "$file_name3"
+				echo "" > "$file_name4"
+				echo "" > "$file_name5"
+				exit
+			fi
+
+			<!-- CLEAR SINGLE FILE -->
+			echo "" > "$file_name"
+
+		</ACTION>	
+	</COMMAND>
+	
+
+
+	<!-- SESSIONS USERNAME -->
+	<COMMAND name="show ipoe sessions username" help="Find active session user by UserName" lock="false" interrupt="true">
+		<PARAM name="username" optional="false" help="subscriber username" ptype="FHTT">				
+			<PARAM name="acao"				help=""											optional="true" interrupt="true"	mode="switch"		ptype="SUBCOMMAND" >
+				<PARAM name="bandwidth"		help="Monitor bandwidth usage"					optional="true"	interrupt="true"	mode="subcommand"	ptype="SUBCOMMAND"/>							
+				<PARAM name="disconect" 	help="Disconect active session"					optional="true"	interrupt="true"	mode="subcommand"	ptype="SUBCOMMAND"/>
+				<PARAM name="ping"			help="Send ICMP IPv4 messages to network host"	optional="true"	interrupt="true"	mode="subcommand"	ptype="SUBCOMMAND"/>							
+				<PARAM name="traffic"		help="Monitor traffica by tcpdump"				optional="true"	interrupt="true"	mode="subcommand"	ptype="SUBCOMMAND"/>							
+			</PARAM>
+		</PARAM>
+	
+		<ACTION>
+			<!-- USERNAME  -->
+			if test -z "${acao}"; then
+				sudo accel-cmd show sessions ifname,username,calling-sid,ip,tx-bytes,rx-bytes,rate-limit,state,uptime match username ${username}
+			fi
+			
+			
+			<!-- BANDWIDTH -->
+			if test "${acao}" = "bandwidth"; then
+				ifname=`sudo accel-cmd show sessions ifname match username ${username} | sed -n "3p" | xargs`
+				
+				if test -z "$ifname"; then
+					echo "Subscriber not conected!"
+				else
+					bmon -b -o curses:details -p "$ifname"						
+				fi				
+			fi				
+
+
+			<!-- PING  -->
+			if test "${acao}" = "ping"; then
+				ip_address=`sudo accel-cmd show sessions ip match username ${username} | sed -n "3p" | xargs`
+							
+				if test -z "$ip_address"; then
+					echo "Subscriber not conected!"
+				else
+					ping -c 5 "$ip_address"
+				fi						
+			fi
+			
+			
+			<!-- DISCONECT  -->
+			if test "${acao}" = "disconect"; then
+				ifname=`sudo accel-cmd show sessions ifname match username ${username} | sed -n "3p" | xargs`
+				
+				if test -z "$ifname"; then
+					echo "Subscriber not conected!"
+				else
+					sudo accel-cmd terminate if "$ifname"
+				fi
+			fi		
+
+	
+			<!-- TRAFFIC  -->
+			if test "${acao}" = "traffic"; then
+
+				ifname=`sudo accel-cmd show sessions ifname match username ${username} | sed -n "3p" | xargs`							
+			
+				if test -z "$ifname"; then
+					echo "Subscriber not conected!"
+				else
+					iptraf-ng -i "$ifname"
+				fi			
+			fi	
+			
+		</ACTION>				
+	</COMMAND>				
+
+	<COMMAND name="show ipoe sessions vlan" help="Find active session user by VLAN">
+		<PARAM name="vlan" help="" ptype="VLAN_ID"/>				
+		<ACTION>
+			sudo accel-cmd show sessions ifname,username,calling-sid,ip,tx-bytes,rx-bytes,rate-limit,state,uptime match called-sid ${vlan}
+		</ACTION>
+	</COMMAND>
+
+
+</VIEW>
+
+</CLISH_MODULE>
