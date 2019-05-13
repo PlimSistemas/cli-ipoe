@@ -11,7 +11,7 @@
 	<COMMAND name="show uptime"	help="Show system uptime">
 		<ACTION>
 			system=`uptime | awk -F'( |,|:)+' '{if ($7=="min") m=$6; else {if ($7~/^day/) {d=$6;h=$8;m=$9} else {h=$6;m=$7}}} {print d+0,"days,",h+0,"hours,",m+0,"minutes."}'`
-			accel=`sudo accel-cmd show stat | grep uptime | sed 's/uptime\: //g' |  sed 's/\./:/g' | awk -F ':' '{print $1+0,"days,",$2+0,"hours,",$3+0,"minutes."}'`
+			accel=`accel-cmd show stat | grep uptime | sed 's/uptime\: //g' |  sed 's/\./:/g' | awk -F ':' '{print $1+0,"days,",$2+0,"hours,",$3+0,"minutes."}'`
 			echo "      System: $system"			
 			echo "   Accel-PPP: $accel"
 		</ACTION>
@@ -65,20 +65,20 @@
 
 	<COMMAND name="show ipoe sessions" help="Show active server sessions">
 		<ACTION>
-			sudo accel-cmd show sessions ifname,username,calling-sid,ip,tx-bytes,rx-bytes,rate-limit,state,uptime
+			accel-cmd show sessions ifname,username,calling-sid,ip,tx-bytes,rx-bytes,rate-limit,state,uptime
 		</ACTION>			
 	</COMMAND>	
 
 	<COMMAND name="show ipoe sessions count" help="Count active users">
 		<ACTION>
-			sudo accel-cmd show stat | grep -A 3 "ipoe:" | sed -e "1d"
+			accel-cmd show stat | grep -A 3 "ipoe:" | sed -e "1d"
 		</ACTION>
 	</COMMAND>	
 
 	<COMMAND name="show ipoe sessions ip"	help="Find active session user by IP Address">
 		<PARAM name="ip"	help="subscriber ip address"	ptype="IP_ADDR"/>
 		<ACTION>
-			sudo accel-cmd show sessions ifname,username,calling-sid,ip,tx-bytes,rx-bytes,rate-limit,state,uptime match ip ${ip}
+			accel-cmd show sessions ifname,username,calling-sid,ip,tx-bytes,rx-bytes,rate-limit,state,uptime match ip ${ip}
 		</ACTION>
 	</COMMAND>
  
@@ -119,19 +119,19 @@
 
 			<!-- TYPE DEFAULT  -->
 			if test -z "${type}"; then
-				sudo less -R -i "$file_name"
+				less -R -i "$file_name"
 				exit
 			fi
 			
 			
 			<!-- TYPE ANALYZER -->
 			if test "${type}" = "analyzer"; then
-				sudo less -R -i "$file_name"
+				less -R -i "$file_name"
 			fi				
 
 			<!-- TYPE REAL-TIME -->
 			if test "${type}" = "real-time"; then
-				sigexec sudo less -R -i +F "$file_name"
+				sigexec less -R -i +F "$file_name"
 			fi				
 
 		</ACTION>		
@@ -207,13 +207,13 @@
 		<ACTION>
 			<!-- USERNAME  -->
 			if test -z "${acao}"; then
-				sudo accel-cmd show sessions ifname,username,calling-sid,ip,tx-bytes,rx-bytes,rate-limit,state,uptime match username ${username}
+				accel-cmd show sessions ifname,username,calling-sid,ip,tx-bytes,rx-bytes,rate-limit,state,uptime match username ${username}
 			fi
 			
 			
 			<!-- BANDWIDTH -->
 			if test "${acao}" = "bandwidth"; then
-				ifname=`sudo accel-cmd show sessions ifname match username ${username} | sed -n "3p" | xargs`
+				ifname=`accel-cmd show sessions ifname match username ${username} | sed -n "3p" | xargs`
 				
 				if test -z "$ifname"; then
 					echo "Subscriber not conected!"
@@ -225,7 +225,7 @@
 
 			<!-- PING  -->
 			if test "${acao}" = "ping"; then
-				ip_address=`sudo accel-cmd show sessions ip match username ${username} | sed -n "3p" | xargs`
+				ip_address=`accel-cmd show sessions ip match username ${username} | sed -n "3p" | xargs`
 							
 				if test -z "$ip_address"; then
 					echo "Subscriber not conected!"
@@ -237,12 +237,12 @@
 			
 			<!-- DISCONECT  -->
 			if test "${acao}" = "disconect"; then
-				ifname=`sudo accel-cmd show sessions ifname match username ${username} | sed -n "3p" | xargs`
+				ifname=`accel-cmd show sessions ifname match username ${username} | sed -n "3p" | xargs`
 				
 				if test -z "$ifname"; then
 					echo "Subscriber not conected!"
 				else
-					sudo accel-cmd terminate if "$ifname"
+					accel-cmd terminate if "$ifname"
 				fi
 			fi		
 
@@ -250,7 +250,7 @@
 			<!-- TRAFFIC  -->
 			if test "${acao}" = "traffic"; then
 
-				ifname=`sudo accel-cmd show sessions ifname match username ${username} | sed -n "3p" | xargs`							
+				ifname=`accel-cmd show sessions ifname match username ${username} | sed -n "3p" | xargs`							
 			
 				if test -z "$ifname"; then
 					echo "Subscriber not conected!"
@@ -265,7 +265,7 @@
 	<COMMAND name="show ipoe sessions vlan" help="Find active session user by VLAN">
 		<PARAM name="vlan" help="" ptype="VLAN_ID"/>				
 		<ACTION>
-			sudo accel-cmd show sessions ifname,username,calling-sid,ip,tx-bytes,rx-bytes,rate-limit,state,uptime match called-sid ${vlan}
+			accel-cmd show sessions ifname,username,calling-sid,ip,tx-bytes,rx-bytes,rate-limit,state,uptime match called-sid ${vlan}
 		</ACTION>
 	</COMMAND>
 

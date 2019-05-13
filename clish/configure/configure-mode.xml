@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CLISH_MODULE xmlns="http://clish.sourceforge.net/XMLSchema" 
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+ xsi:schemaLocation="http://clish.sourceforge.net/XMLSchema
+                     http://clish.sourceforge.net/XMLSchema/clish.xsd">
+	<!--=======================================================-->
+
+<VIEW name="configure-view"
+	prompt="${USER}@${HOSTNAME}# ">
+	restore="depth">
+
+<!-- Inheritance -->
+
+<!-- Virtual commands -->
+
+	<COMMAND name="no" help="Negate a command or set its defaults"/>
+
+	
+
+	
+	
+
+
+	<COMMAND name="show" help="Show configuration"/>
+	<COMMAND name="show system" help="Show system configuration"/>	
+
+	<!-- SYSTEM LOGIN LIST -->
+	<COMMAND name="show system login" help="Show system login configuration">
+		<ACTION>
+			/system/scritps/user.sh list
+		</ACTION>
+	</COMMAND>
+
+
+	<COMMAND name="delete" help="Delete configuration"/>
+	<COMMAND name="delete system" help="Delete system configuration"/>	
+	<COMMAND name="delete system login" help="Delete system login configuration"/>
+
+	<!-- SYSTEM LOGIN DELETE -->
+	<COMMAND name="delete system login user" 	help="Username">
+		<PARAM name="user"					help="Username" ptype="STRING" 					optional="false">				
+		</PARAM>		
+		<ACTION>
+			/system/scritps/user.sh del ${user}
+		</ACTION>
+	</COMMAND>
+
+
+	
+	<COMMAND name="set" help="Set a parameter"/>
+	<COMMAND name="set system" help=" System parameters"/>	
+	<COMMAND name="set system login" help="Names, login classes, and passwords for users"/>
+
+	<!-- SYSTEM LOGIN ADD -->
+	<COMMAND name="set system login user" 	help="Username">
+		<PARAM name="user"					help="Username" ptype="STRING" 					optional="false">				
+			<PARAM name="password"			help="Password for user"						optional="false" 	mode="subcommand"		ptype="SUBCOMMAND" >
+				<PARAM name="pass"		help="Password"					optional="false"	ptype="STRING"/>							
+			</PARAM>
+		</PARAM>		
+
+		<ACTION>
+			/system/scritps/user.sh add ${user} ${pass}
+		</ACTION>
+	</COMMAND>
+
+	
+
+
+<!-- Simple configuration mode commands -->
+
+	<COMMAND name="exit" help="Exit from configure mode" lock="false">
+		<ACTION builtin="clish_close"/>
+	</COMMAND>
+
+	<COMMAND name="hostname" help="Set system's network name">
+		<PARAM name="hostname" help="This system's network name" ptype="STRING"/>
+		<CONFIG priority="0x1000"/>
+		<ACTION>
+			hostname "${hostname}"
+			echo "${hostname}" > /etc/hostname
+			sed -i "s|^127\.0\.0\.1.*$|127.0.0.1 localhost ${hostname}|" /etc/hosts
+		</ACTION>
+	</COMMAND>
+
+</VIEW>
+
+</CLISH_MODULE>

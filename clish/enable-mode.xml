@@ -13,8 +13,8 @@
 		<ACTION>reboot</ACTION>
 	</COMMAND>
 
-	<COMMAND name="configure" help="Configure from the terminal"
-		view="configure-view">
+	<COMMAND name="configure" help="Configure from the terminal">
+		<ACTION> su -l -c "clish -x /etc/clish/configure" </ACTION> 
 	</COMMAND>
 
 	<COMMAND name="show"  help="Show running system information"/>
