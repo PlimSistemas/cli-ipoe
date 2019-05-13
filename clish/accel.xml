@@ -60,22 +60,22 @@
 	</COMMAND>
 
 
-	<COMMAND name="show ipoe" help="show accel-ppp status">
+	<COMMAND name="show" help="show accel-ppp status">
 	</COMMAND>		
 
-	<COMMAND name="show ipoe sessions" help="Show active server sessions">
+	<COMMAND name="show sessions" help="Show active server sessions">
 		<ACTION>
 			accel-cmd show sessions ifname,username,calling-sid,ip,tx-bytes,rx-bytes,rate-limit,state,uptime
 		</ACTION>			
 	</COMMAND>	
 
-	<COMMAND name="show ipoe sessions count" help="Count active users">
+	<COMMAND name="show sessions count" help="Count active users">
 		<ACTION>
 			accel-cmd show stat | grep -A 3 "ipoe:" | sed -e "1d"
 		</ACTION>
 	</COMMAND>	
 
-	<COMMAND name="show ipoe sessions ip"	help="Find active session user by IP Address">
+	<COMMAND name="show sessions ip"	help="Find active session user by IP Address">
 		<PARAM name="ip"	help="subscriber ip address"	ptype="IP_ADDR"/>
 		<ACTION>
 			accel-cmd show sessions ifname,username,calling-sid,ip,tx-bytes,rx-bytes,rate-limit,state,uptime match ip ${ip}
@@ -194,7 +194,7 @@
 
 
 	<!-- SESSIONS USERNAME -->
-	<COMMAND name="show ipoe sessions username" help="Find active session user by UserName" lock="false" interrupt="true">
+	<COMMAND name="show sessions username" help="Find active session user by UserName" lock="false" interrupt="true">
 		<PARAM name="username" optional="false" help="subscriber username" ptype="FHTT">				
 			<PARAM name="acao"				help=""											optional="true" interrupt="true"	mode="switch"		ptype="SUBCOMMAND" >
 				<PARAM name="bandwidth"		help="Monitor bandwidth usage"					optional="true"	interrupt="true"	mode="subcommand"	ptype="SUBCOMMAND"/>							
@@ -262,7 +262,7 @@
 		</ACTION>				
 	</COMMAND>				
 
-	<COMMAND name="show ipoe sessions vlan" help="Find active session user by VLAN">
+	<COMMAND name="show sessions vlan" help="Find active session user by VLAN">
 		<PARAM name="vlan" help="" ptype="VLAN_ID"/>				
 		<ACTION>
 			accel-cmd show sessions ifname,username,calling-sid,ip,tx-bytes,rx-bytes,rate-limit,state,uptime match called-sid ${vlan}
