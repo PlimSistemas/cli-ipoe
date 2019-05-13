@@ -1,27 +1,7 @@
 #Preparação
 #------------------------------------------------
-
-	clear
-	interface1=( $(ip addr list | awk -F': ' '/^[0-9]/ {print $2}') )
-	ifaces=$(echo "${interface1[@]}")
-	ip1=$(ip route get 8.8.8.8 | awk 'NR==1 {print $NF}')
-	hostname1=$(hostname)
-	
 	mkdir -p /system
-	read -p "Enter hostname [$hostname1]:  "  hostname
-	read -p "Enter interface for clients [$ifaces]: "  interface
-	
-	if [ "$interface" == "" ]; then
-		interface="lo"
-	fi
-	
-	if [ "$ip" == "" ]; then
-		ip="$ip1"
-	fi
 
-	if [ "$hostname" == "" ]; then
-		hostname="$hostname1"
-	fi
 	
 #Atualizando Pacotes
 #------------------------------------------------
@@ -30,13 +10,6 @@
 	apt install -y --no-install-recommends psmisc git git-core make cmake zlib1g-dev liblua5.1-dev libpcre3-dev build-essential libssl-dev libsnmp-dev linux-headers-`uname -r`
 	apt install -y --no-install-recommends dh-autoreconf libexpat1-dev telnet ntpdate ipset unzip sqlite3 libsqlite3-dev
 
-# Hostname
-#------------------------------------------------
-	if [ "$hostname" != "" ]; then
-		echo "$hostname" > /etc/hostname
-		sed -i "s|^127\.0\.0\.1.*$|127.0.0.1 localhost $hostname|" /etc/hosts
-		#    hostnamectl set-hostname JSG-IPoE
-	fi
 
 #Instalando o FRR
 #------------------------------------------------
@@ -245,10 +218,11 @@
 		echo "FILENAME=backup-accel-ppp-$TIME.tar"
 		echo
 		echo "tar -cf /backup/$FILENAME /etc/network/interfaces"
-		echo "tar -rf /backup/$FILENAME /firewall/ipset.conf"
-		echo "tar -rf /backup/$FILENAME /firewall/iptables.conf"
+		echo "tar -rf /backup/$FILENAME /system/firewall/ipset.conf"
+		echo "tar -rf /backup/$FILENAME /system/firewall/iptables.conf"
 		echo "tar -rf /backup/$FILENAME /etc/accel-ppp.conf"
 		echo "tar -rf /backup/$FILENAME /etc/accel-ppp.lua"
+		echo "tar -rf /backup/$FILENAME /etc/chap-secrets"
 		echo "tar -rf /backup/$FILENAME /etc/snmp/snmpd.conf"
 		echo "tar -rf /backup/$FILENAME /etc/frr/frr.conf"
 		echo "tar -rf /backup/$FILENAME ~/.gdrive"
@@ -339,21 +313,18 @@
 	
 	ln -s /system/configs/accel-ppp/* /etc/ 
 	ln -s /system/clish /etc/
-	
-	
-	if [ "$interface" != "" ]; then
-		sed -i 's/=lo/=$interface/g' /etc/frr/daemons
-	fi
-	
-	if [ "$hostname" != "" ]; then
-		sed -i 's/=lo/=$interface/g' /etc/frr/daemons
-	fi
-	
-	
-	
+		
 	
 #Outros
 #------------------------------------------------
+	
+	(
+		echo
+		echo 'export HOSTNAME=$(hostname)'
+	) >> /etc/profile
+	
+	source /etc/profile
+	
 	groupadd CLI
 	echo '%CLI     ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
 	
@@ -367,4 +338,4 @@
 	chmod +x /usr/bin/klish
 	
 	
-	
+	rm -rf /usr/local/scr/cli-ipoe

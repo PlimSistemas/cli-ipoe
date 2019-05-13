@@ -27,7 +27,7 @@
 	<!-- SYSTEM LOGIN LIST -->
 	<COMMAND name="show system login" help="Show system login configuration">
 		<ACTION>
-			/system/scritps/user.sh list
+			/system/scritps/users.sh list
 		</ACTION>
 	</COMMAND>
 
@@ -41,7 +41,7 @@
 		<PARAM name="user"					help="Username" ptype="STRING" 					optional="false">				
 		</PARAM>		
 		<ACTION>
-			/system/scritps/user.sh del ${user}
+			/system/scritps/users.sh del ${user}
 		</ACTION>
 	</COMMAND>
 
@@ -60,7 +60,7 @@
 		</PARAM>		
 
 		<ACTION>
-			/system/scritps/user.sh add ${user} ${pass}
+			/system/scritps/users.sh add ${user} ${pass}
 		</ACTION>
 	</COMMAND>
 
