@@ -30,11 +30,11 @@
 	if [ "$1" == "show" ]; then
 	
 		if [ "$3" == "analyzer" ] || [ "$3" == "" ]; then
-			less -R -i "$file_name"
+			sudo less -R -i "$file_name"
 		fi				
 
 		if [ "$3" == "real-time" ]; then
-			less -R -i +F "$file_name"
+			sudo less -R -i +F "$file_name"
 		fi
 		
 	fi
@@ -59,7 +59,7 @@
 			exit 0
 		fi
 
-		echo "" > "$file_name"
+		sudo echo "" > "$file_name"
 	
 	fi
 	

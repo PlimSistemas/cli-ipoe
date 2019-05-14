@@ -13,13 +13,6 @@
 
 <!-- Virtual commands -->
 
-	<COMMAND name="no" help="Negate a command or set its defaults"/>
-
-	
-
-	
-	
-
 
 	<COMMAND name="show" help="Show configuration"/>
 	<COMMAND name="show system" help="Show system configuration"/>	
@@ -73,13 +66,10 @@
 		<ACTION builtin="clish_close"/>
 	</COMMAND>
 
-	<COMMAND name="hostname" help="Set system's network name">
+	<COMMAND name="set system hostname" help="Set system's network name">
 		<PARAM name="hostname" help="This system's network name" ptype="STRING"/>
-		<CONFIG priority="0x1000"/>
 		<ACTION>
-			hostname "${hostname}"
-			echo "${hostname}" > /etc/hostname
-			sed -i "s|^127\.0\.0\.1.*$|127.0.0.1 localhost ${hostname}|" /etc/hosts
+			/system/scripts/hostname.sh ${hostname}			
 		</ACTION>
 	</COMMAND>
 

@@ -96,7 +96,7 @@
 		</PARAM>
 
 		<ACTION>
-			/system/scripts/logs.sh show ${type} ${file}			
+			/system/scripts/logs.sh show ${file} ${type}
 		</ACTION>		
 	</COMMAND>
 	

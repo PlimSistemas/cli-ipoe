@@ -9,16 +9,21 @@
 
 	<NAMESPACE ref="ping-view" help="true" completion="true"/>
 	
-	<COMMAND name="reboot" help="Halt and perform a cold restart">
-		<ACTION>reboot</ACTION>
-	</COMMAND>
-
 	<COMMAND name="configure" help="Configure from the terminal">
 		<ACTION> su -l -c "clish -x /etc/clish/configure" </ACTION> 
 	</COMMAND>
 
 	<COMMAND name="show"  help="Show running system information"/>
 	<COMMAND name="clear" help="Reset functions"/>
+
+	<COMMAND name="frr" help="IP routing protocol suite for Linux and Unix platforms which includes protocol daemons for BGP, IS-IS, LDP, OSPF, PIM, and RIP.">
+		<ACTION>
+			sudo vtysh		
+		</ACTION>
+	</COMMAND>
+	
+	
+
 
 </VIEW>
 

@@ -1,3 +1,6 @@
+#!/bin/bash
+
+	
 #Preparação
 #------------------------------------------------
 	mkdir -p /system
@@ -41,6 +44,7 @@
 
 	mkdir -p /var/log/accel-ppp
 	chmod -R a+rwX /var/log/accel-ppp
+	chmod -R a+rwX /var/log/accel-ppp/*
 
 	echo "ATTRIBUTE DHCP-Router-IP-Address 241 ipaddr" >> /usr/local/share/accel-ppp/radius/dictionary
 	echo "ATTRIBUTE DHCP-Mask 242 integer" >> /usr/local/share/accel-ppp/radius/dictionary
@@ -339,7 +343,36 @@
 		echo "clish -l"
 		echo "exit"
 	) > /usr/bin/klish
-	chmod +x /usr/bin/klish
+	chmod +x /usr/bin/klish	
 	
+	
+	/system/scritps/users.sh add admin admin@123
 	
 	rm -rf /usr/local/src/cli-ipoe/
+	
+	
+#Fim
+#------------------------------------------------
+	clear
+	echo "" > /etc/motd
+	(
+		echo
+		echo
+		echo "****************************************************************"
+		echo "*                        Install Complete                      *"
+		echo "****************************************************************"
+		echo "*                                                              *"
+		echo "*  A user was created to access SSH                            *"
+		echo "*  Login....: admin                                            *"
+		echo "*  Password.: admin@123                                        *"
+		echo "*                                                              *"
+		echo "*  To change the password                                      *"
+		echo "*  > configure                                                 *"
+		echo "*  # set system login user admin password abcxyz               *"
+		echo "*                                                              *"
+		echo "*  To configure Accel-PPP edit the file /etc/accel-ppp.conf    *"
+		echo "*  To configure SNMP edit the file /etc/snmp/snmpd.conf        *"
+		echo "*                                                              *"
+		echo "****************************************************************"	
+		
+	)

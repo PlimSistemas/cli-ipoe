@@ -38,6 +38,7 @@
 		password=$(echo $3 | openssl passwd -1 -stdin)
 		
 		useradd -m $2 > /dev/null 2>&1
+		usermod -a -G CLI $2
 		usermod --shell /usr/bin/klish $2 > /dev/null 2>&1
 		usermod --password $password $2 > /dev/null 2>&1		
 
