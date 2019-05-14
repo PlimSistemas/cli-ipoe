@@ -60,8 +60,6 @@
 	</COMMAND>
 
 
-	<COMMAND name="show" help="show accel-ppp status">
-	</COMMAND>		
 
 	<COMMAND name="show sessions" help="Show active server sessions">
 		<ACTION>
@@ -97,43 +95,8 @@
 			<PARAM name="analyzer"		help="Analyzer log file (Default)"				optional="false"	mode="subcommand"	ptype="SUBCOMMAND"/>										
 		</PARAM>
 
-		<ACTION>		
-		
-			case "${file}" in
-				"accel")
-					file_name=`cat /etc/accel-ppp.conf | grep log-file= | sed 's/log-file=//g'`
-					;;
-				"auth-fail")
-					file_name=`cat /etc/accel-ppp.conf | grep log-fail-file= | sed 's/log-fail-file=//g'`
-					;;
-				"core")
-					file_name=`cat /etc/accel-ppp.conf | grep log-error= | sed 's/log-error=//g'`
-					;;
-				"debug")
-					file_name=`cat /etc/accel-ppp.conf | grep log-debug= | sed 's/log-debug=//g'`
-					;;
-				"emerg")
-					file_name=`cat /etc/accel-ppp.conf | grep log-emerg= | sed 's/log-emerg=//g'`
-					;;	
-			esac
-
-			<!-- TYPE DEFAULT  -->
-			if test -z "${type}"; then
-				less -R -i "$file_name"
-				exit
-			fi
-			
-			
-			<!-- TYPE ANALYZER -->
-			if test "${type}" = "analyzer"; then
-				less -R -i "$file_name"
-			fi				
-
-			<!-- TYPE REAL-TIME -->
-			if test "${type}" = "real-time"; then
-				sigexec less -R -i +F "$file_name"
-			fi				
-
+		<ACTION>
+			/system/scripts/logs.sh show ${type} ${file}			
 		</ACTION>		
 	</COMMAND>
 	
@@ -150,44 +113,7 @@
 		</PARAM>
 
 		<ACTION>		
-		
-			case "${file}" in
-				"accel")
-					file_name=`cat /etc/accel-ppp.conf | grep log-file= | sed 's/log-file=//g'`
-					;;
-				"auth-fail")
-					file_name=`cat /etc/accel-ppp.conf | grep log-fail-file= | sed 's/log-fail-file=//g'`
-					;;
-				"core")
-					file_name=`cat /etc/accel-ppp.conf | grep log-error= | sed 's/log-error=//g'`
-					;;
-				"debug")
-					file_name=`cat /etc/accel-ppp.conf | grep log-debug= | sed 's/log-debug=//g'`
-					;;
-				"emerg")
-					file_name=`cat /etc/accel-ppp.conf | grep log-emerg= | sed 's/log-emerg=//g'`
-					;;	
-			esac
-			
-			
-			<!-- CLEAR ALL FILES -->
-			if test "${file}" = "all"; then		
-				file_name1=`cat /etc/accel-ppp.conf | grep log-file= | sed 's/log-file=//g'`
-				file_name2=`cat /etc/accel-ppp.conf | grep log-fail-file= | sed 's/log-fail-file=//g'`
-				file_name3=`cat /etc/accel-ppp.conf | grep log-error= | sed 's/log-error=//g'`
-				file_name4=`cat /etc/accel-ppp.conf | grep log-debug= | sed 's/log-debug=//g'`	
-				file_name5=`cat /etc/accel-ppp.conf | grep log-emerg= | sed 's/log-emerg=//g'`
-				echo "" > "$file_name1"
-				echo "" > "$file_name2"
-				echo "" > "$file_name3"
-				echo "" > "$file_name4"
-				echo "" > "$file_name5"
-				exit
-			fi
-
-			<!-- CLEAR SINGLE FILE -->
-			echo "" > "$file_name"
-
+			/system/scripts/logs.sh clear ${file}
 		</ACTION>	
 	</COMMAND>
 	
