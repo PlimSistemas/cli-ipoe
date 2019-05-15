@@ -1,6 +1,6 @@
 #!/bin/bash
 
-. /system/scripts/functions.sh
+. /system/clish/bin/functions.sh
 
 
 # LIST
@@ -24,17 +24,6 @@
 # ADD
 #------------------------------------------------
 	if [ "$1" == "add" ]; then
-	
-		# Verifica se usuário já existe
-		user=$(sql_exec "select * from configs where path = 'system login user' and value1 = \"$3\";")		
-		IFS='|' read -r -a config <<< "$user"
-		
-		if [ "${config[1]}" == "$2" ]; then
-			echo "Username already exists!"
-			exit 0
-		fi
-
-
 		password=$(echo $3 | openssl passwd -1 -stdin)
 		
 		useradd -m $2 > /dev/null 2>&1

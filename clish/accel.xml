@@ -10,10 +10,7 @@
 	<!-- UPTIME -->
 	<COMMAND name="show uptime"	help="Show system uptime">
 		<ACTION>
-			system=`uptime | awk -F'( |,|:)+' '{if ($7=="min") m=$6; else {if ($7~/^day/) {d=$6;h=$8;m=$9} else {h=$6;m=$7}}} {print d+0,"days,",h+0,"hours,",m+0,"minutes."}'`
-			accel=`accel-cmd show stat | grep uptime | sed 's/uptime\: //g' |  sed 's/\./:/g' | awk -F ':' '{print $1+0,"days,",$2+0,"hours,",$3+0,"minutes."}'`
-			echo "      System: $system"			
-			echo "   Accel-PPP: $accel"
+			/system/clish/bin/uptime.sh
 		</ACTION>
 	</COMMAND>
 
@@ -21,41 +18,7 @@
 	<!-- VERSION -->
 	<COMMAND name="show version"	help="Show system version">
 		<ACTION>
-		
-			info=`facter`
-			arc=`echo "$info" | grep ^hardwaremodel | sed 's/hardwaremodel => //g'`	
-			type=`echo "$info" | grep ^virtual | sed 's/virtual => //g'`	
-			vendor=`echo "$info" | grep ^manufacturer | sed 's/manufacturer => //g'`	
-			model=`echo "$info" | grep ^productname | sed 's/productname => //g'`	
-			serial=`echo "$info" | grep ^serialnumber | sed 's/serialnumber => //g'`	
-			uuid=`echo "$info" | grep ^uuid | sed 's/uuid => //g'`
-			cpu_count=`echo "$info" | grep ^physicalprocessorcount | sed 's/physicalprocessorcount => //g'`	
-			cpu_name=`echo "$info" | grep ^processor0 | sed 's/processor0 => //g'`	
-			cpu_cores=`echo "$info" | grep ^processorcount | sed 's/processorcount => //g'`			
-			os_family=`echo "$info" | grep ^osfamily | sed 's/osfamily => //g'`	
-			os_desc=`echo "$info" | grep ^lsbdistdescription | sed 's/lsbdistdescription => //g'`	
-			os_arc=`echo "$info" | grep ^rubyplatform | sed 's/rubyplatform => //g'`	
-
-			echo
-			echo "     Architecture:  $arc"
-			echo "      System type:  $type"
-			echo
-			echo "  Hardware vendor:  $vendor"
-			echo "   Hardware model:  $model"
-			echo "     Hardware S/N:  $serial"
-			echo "    Hardware UUID:  $uuid"
-			echo
-			echo "        OS Family:  $os_family"
-			echo "   OS Description:  $os_desc"
-			echo "  OS Architecture:  $os_arc"
-			echo			
-			echo "         CPU Name:  $cpu_name" 
-			echo "      CPU Sockets:  $cpu_count" 
-			echo "  CPU Total Cores:  $cpu_cores" 
-			echo ""
-			echo "        Copyright:  Danilo Cruz (danilo@plimtelecom.com.br)"
-			echo 
-					
+			/system/clish/bin/version.sh
 		</ACTION>
 	</COMMAND>
 
@@ -63,20 +26,20 @@
 
 	<COMMAND name="show sessions" help="Show active server sessions">
 		<ACTION>
-			accel-cmd show sessions ifname,username,calling-sid,ip,tx-bytes,rx-bytes,rate-limit,state,uptime
+			/system/clish/bin/sessions.sh show
 		</ACTION>			
 	</COMMAND>	
 
 	<COMMAND name="show sessions count" help="Count active users">
 		<ACTION>
-			accel-cmd show stat | grep -A 3 "ipoe:" | sed -e "1d"
+			/system/clish/bin/sessions.sh count			
 		</ACTION>
 	</COMMAND>	
 
 	<COMMAND name="show sessions ip"	help="Find active session user by IP Address">
 		<PARAM name="ip"	help="subscriber ip address"	ptype="IP_ADDR"/>
 		<ACTION>
-			accel-cmd show sessions ifname,username,calling-sid,ip,tx-bytes,rx-bytes,rate-limit,state,uptime match ip ${ip}
+			/system/clish/bin/sessions.sh ip ${ip}
 		</ACTION>
 	</COMMAND>
  
@@ -96,7 +59,7 @@
 		</PARAM>
 
 		<ACTION>
-			/system/scripts/logs.sh show ${file} ${type}
+			/system/clish/bin/logs.sh show ${file} ${type}
 		</ACTION>		
 	</COMMAND>
 	
@@ -113,7 +76,7 @@
 		</PARAM>
 
 		<ACTION>		
-			/system/scripts/logs.sh clear ${file}
+			/system/clish/bin/logs.sh clear ${file}
 		</ACTION>	
 	</COMMAND>
 	
@@ -131,58 +94,33 @@
 		</PARAM>
 	
 		<ACTION>
+		
 			<!-- USERNAME  -->
 			if test -z "${acao}"; then
-				accel-cmd show sessions ifname,username,calling-sid,ip,tx-bytes,rx-bytes,rate-limit,state,uptime match username ${username}
+				/system/clish/bin/sessions.sh show
 			fi
-			
 			
 			<!-- BANDWIDTH -->
 			if test "${acao}" = "bandwidth"; then
-				ifname=`accel-cmd show sessions ifname match username ${username} | sed -n "3p" | xargs`
-				
-				if test -z "$ifname"; then
-					echo "Subscriber not conected!"
-				else
-					bmon -b -o curses:details -p "$ifname"						
-				fi				
+				/system/clish/bin/sessions.sh bandwidth ${username}
 			fi				
 
 
 			<!-- PING  -->
 			if test "${acao}" = "ping"; then
-				ip_address=`accel-cmd show sessions ip match username ${username} | sed -n "3p" | xargs`
-							
-				if test -z "$ip_address"; then
-					echo "Subscriber not conected!"
-				else
-					ping -c 5 "$ip_address"
-				fi						
+				/system/clish/bin/sessions.sh ping ${username}					
 			fi
 			
 			
 			<!-- DISCONECT  -->
 			if test "${acao}" = "disconect"; then
-				ifname=`accel-cmd show sessions ifname match username ${username} | sed -n "3p" | xargs`
-				
-				if test -z "$ifname"; then
-					echo "Subscriber not conected!"
-				else
-					accel-cmd terminate if "$ifname"
-				fi
+				/system/clish/bin/sessions.sh disconect ${username}	
 			fi		
 
 	
 			<!-- TRAFFIC  -->
 			if test "${acao}" = "traffic"; then
-
-				ifname=`accel-cmd show sessions ifname match username ${username} | sed -n "3p" | xargs`							
-			
-				if test -z "$ifname"; then
-					echo "Subscriber not conected!"
-				else
-					iptraf-ng -i "$ifname"
-				fi			
+				/system/clish/bin/sessions.sh touch ${username}
 			fi	
 			
 		</ACTION>				
@@ -191,7 +129,7 @@
 	<COMMAND name="show sessions vlan" help="Find active session user by VLAN">
 		<PARAM name="vlan" help="" ptype="VLAN_ID"/>				
 		<ACTION>
-			accel-cmd show sessions ifname,username,calling-sid,ip,tx-bytes,rx-bytes,rate-limit,state,uptime match called-sid ${vlan}
+			/system/clish/bin/sessions.sh vlan ${username}
 		</ACTION>
 	</COMMAND>
 

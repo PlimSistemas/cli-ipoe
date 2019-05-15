@@ -20,7 +20,7 @@
 	<!-- SYSTEM LOGIN LIST -->
 	<COMMAND name="show system login" help="Show system login configuration">
 		<ACTION>
-			/system/scripts/users.sh list
+			/system/clish/bin/users.sh list
 		</ACTION>
 	</COMMAND>
 
@@ -34,7 +34,7 @@
 		<PARAM name="user"					help="Username" ptype="STRING" 					optional="false">				
 		</PARAM>		
 		<ACTION>
-			/system/scripts/users.sh del ${user}
+			/system/clish/bin/users.sh del ${user}
 		</ACTION>
 	</COMMAND>
 
@@ -53,7 +53,7 @@
 		</PARAM>		
 
 		<ACTION>
-			/system/scripts/users.sh add ${user} ${pass}
+			/system/clish/bin/users.sh add ${user} ${pass}
 		</ACTION>
 	</COMMAND>
 
@@ -69,7 +69,7 @@
 	<COMMAND name="set system hostname" help="Set system's network name">
 		<PARAM name="hostname" help="This system's network name" ptype="STRING"/>
 		<ACTION>
-			/system/scripts/hostname.sh ${hostname}			
+			/system/clish/bin/hostname.sh ${hostname}			
 		</ACTION>
 	</COMMAND>
 

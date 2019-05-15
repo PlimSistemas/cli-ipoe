@@ -308,13 +308,12 @@
 	git clone https://github.com/PlimSistemas/cli-ipoe.git cli-ipoe
 
 	mv /usr/local/src/cli-ipoe/clish/ /system
-	mv /usr/local/src/cli-ipoe/scripts/ /system
 	mv /usr/local/src/cli-ipoe/db/ /system
 
 	mv /usr/local/src/cli-ipoe/configs/accel-ppp/ /system/configs
 	mv /usr/local/src/cli-ipoe/configs/snmp/ /system/configs
 	
-	chmod +x /system/scripts/*
+	chmod +x /system/clish/bin/*
 	
 	rm -rf /etc/snmp/snmpd.conf	
 	ln -s /system/configs/snmp/snmpd.conf /etc/snmp/	
@@ -346,7 +345,7 @@
 	chmod +x /usr/bin/klish	
 	
 	
-	/system/scritps/users.sh add admin admin@123
+	/system/clish/bin/users.sh add admin accel
 	
 	rm -rf /usr/local/src/cli-ipoe/
 	

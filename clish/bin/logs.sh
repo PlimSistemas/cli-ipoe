@@ -46,16 +46,16 @@
 
 
 		if [ "$file_name" == "all" ]; then
-			file_name1=$(cat /etc/accel-ppp.conf | grep log-file= | sed 's/log-file=//g')
-			file_name2=$(cat /etc/accel-ppp.conf | grep log-fail-file= | sed 's/log-fail-file=//g')
-			file_name3=$(cat /etc/accel-ppp.conf | grep log-error= | sed 's/log-error=//g')
-			file_name4=$(cat /etc/accel-ppp.conf | grep log-debug= | sed 's/log-debug=//g')	
-			file_name5=$(cat /etc/accel-ppp.conf | grep log-emerg= | sed 's/log-emerg=//g')
-			echo "" > "$file_name1"
-			echo "" > "$file_name2"
-			echo "" > "$file_name3"
-			echo "" > "$file_name4"
-			echo "" > "$file_name5"
+			file_name1=$(cat /etc/accel-ppp.conf | grep log-file= | sed 's/log-file=//g' | tr -d '[[:space:]]')
+			file_name2=$(cat /etc/accel-ppp.conf | grep log-fail-file= | sed 's/log-fail-file=//g' | tr -d '[[:space:]]')
+			file_name3=$(cat /etc/accel-ppp.conf | grep log-error= | sed 's/log-error=//g' | tr -d '[[:space:]]')
+			file_name4=$(cat /etc/accel-ppp.conf | grep log-debug= | sed 's/log-debug=//g' | tr -d '[[:space:]]')	
+			file_name5=$(cat /etc/accel-ppp.conf | grep log-emerg= | sed 's/log-emerg=//g' | tr -d '[[:space:]]')
+			sudo echo "" > "$file_name1"
+			sudo echo "" > "$file_name2"
+			sudo echo "" > "$file_name3"
+			sudo echo "" > "$file_name4"
+			sudo echo "" > "$file_name5"
 			exit 0
 		fi
 

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-. /system/scripts/functions.sh
+. /system/clish/bin/functions.sh
 
 
 # SET
