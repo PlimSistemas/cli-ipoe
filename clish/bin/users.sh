@@ -13,6 +13,12 @@
 
 # DELETE
 #------------------------------------------------
+
+	if [ "$2" == "admin" ]; then
+		echo "Nao e permitido excluir o usuario ADMIN"
+		exit 0
+	fi
+	
 	if [ "$1" == "del" ]; then
 		userdel $2 > /dev/null 2>&1
 		rm -rf /home/$2 > /dev/null 2>&1

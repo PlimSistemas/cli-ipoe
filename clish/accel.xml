@@ -7,6 +7,19 @@
 
 <VIEW name="enable-view">
 
+
+
+	<!-- SESSIONS USERNAME -->
+	<COMMAND name="show statistics" help="Mostrar estatisticas do Accel-PPP" lock="false" interrupt="true">
+		<PARAM name="interval" optional="true" help="Intervalo de atualizacao" mode="subcommand" ptype="SUBCOMMAND">				
+			<PARAM name="secs"		help="Intervalor de atualizacao em segundos"					optional="true"	interrupt="true" ptype="INT"/>							
+		</PARAM>	
+		<ACTION>
+			/system/clish/bin/statistics.sh "${secs}"
+		</ACTION>				
+	</COMMAND>	
+
+
 	<!-- UPTIME -->
 	<COMMAND name="show uptime"	help="Show system uptime">
 		<ACTION>
@@ -129,7 +142,7 @@
 	<COMMAND name="show sessions vlan" help="Find active session user by VLAN">
 		<PARAM name="vlan" help="" ptype="VLAN_ID"/>				
 		<ACTION>
-			/system/clish/bin/sessions.sh vlan ${username}
+			/system/clish/bin/sessions.sh vlan ${vlan}
 		</ACTION>
 	</COMMAND>
 

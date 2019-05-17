@@ -14,64 +14,92 @@
 <!-- Virtual commands -->
 
 
-	<COMMAND name="show" help="Show configuration"/>
-	<COMMAND name="show system" help="Show system configuration"/>	
-
-	<!-- SYSTEM LOGIN LIST -->
-	<COMMAND name="show system login" help="Show system login configuration">
-		<ACTION>
-			/system/clish/bin/users.sh list
-		</ACTION>
-	</COMMAND>
-
-
-	<COMMAND name="delete" help="Delete configuration"/>
-	<COMMAND name="delete system" help="Delete system configuration"/>	
-	<COMMAND name="delete system login" help="Delete system login configuration"/>
-
-	<!-- SYSTEM LOGIN DELETE -->
-	<COMMAND name="delete system login user" 	help="Username">
-		<PARAM name="user"					help="Username" ptype="STRING" 					optional="false">				
-		</PARAM>		
-		<ACTION>
-			/system/clish/bin/users.sh del ${user}
-		</ACTION>
-	</COMMAND>
-
-
+	<!-- RELOAD -->
+		<COMMAND name="reload" 				help="Recarregar configuracoes dos modulos"/>
+		<COMMAND name="reload accel-ppp" 	help="Recarregar o Accel-PPP  [apenas reload nas configuracoes]">		<ACTION>sudo accel-cmd reload</ACTION></COMMAND>
+		<COMMAND name="reload firewall"		help="Reconfigurar firewall">											<ACTION>sudo /system/firewall/firewall.sh</ACTION></COMMAND>
 	
-	<COMMAND name="set" help="Set a parameter"/>
-	<COMMAND name="set system" help=" System parameters"/>	
-	<COMMAND name="set system login" help="Names, login classes, and passwords for users"/>
+	<!-- RESET -->
+		<COMMAND name="restart" 			help="Reiniciar daemon"/>
+		<COMMAND name="restart accel-ppp" 	help="Restart Daemon do Accel-PPP">	<ACTION>sudo service accel-ppp restart</ACTION></COMMAND>
 
-	<!-- SYSTEM LOGIN ADD -->
-	<COMMAND name="set system login user" 	help="Username">
-		<PARAM name="user"					help="Username" ptype="STRING" 					optional="false">				
-			<PARAM name="password"			help="Password for user"						optional="false" 	mode="subcommand"		ptype="SUBCOMMAND" >
-				<PARAM name="pass"		help="Password"					optional="false"	ptype="STRING"/>							
-			</PARAM>
-		</PARAM>		
+	<!-- SHOW -->
+		<COMMAND name="show" 				help="Visualizar configuracoes">		<ACTION>/system/clish/bin/config_get.sh show		</ACTION></COMMAND>
+		<COMMAND name="show system" 		help="Configuracoes do sistema">		<ACTION>/system/clish/bin/config_get.sh show system	</ACTION></COMMAND>
+		<COMMAND name="show system login"	help="Configuracoes de usuarios">		<ACTION>/system/clish/bin/users.sh list				</ACTION></COMMAND>
+		
+		<COMMAND name="show system firewall" 						help="Configuracoes de firewall"/>
+		<COMMAND name="show system firewall status"					help="Verifcar status do firewall">												<ACTION>/system/clish/bin/firewall.sh status				</ACTION></COMMAND>
+		<COMMAND name="show system firewall group" 					help="Grupos de ips, redes ou portas">											<ACTION>/system/clish/bin/config_get.sh show firewal group	</ACTION></COMMAND>
+		<COMMAND name="show system firewall group pbr"				help="Redes que irao participar do PBR">										<ACTION>/system/clish/bin/firewall.sh list pbr				</ACTION></COMMAND>
+		<COMMAND name="show system firewall group static-ip" 		help="Redes publicas sem bloqueio de portas">									<ACTION>/system/clish/bin/firewall.sh list static-ip		</ACTION></COMMAND>
+		<COMMAND name="show system firewall group cpe-management" 	help="Redes de gerencia que poderao acessar as portas dos IPs com bloqueio">	<ACTION>/system/clish/bin/firewall.sh list cpe-management	</ACTION></COMMAND>
+		<COMMAND name="show system firewall group cpe-ports" 		help="Portas que serao bloqueadas">												<ACTION>/system/clish/bin/firewall.sh list cpe-ports		</ACTION></COMMAND>
+		<COMMAND name="show system firewall group acl-ssh"			help="Redes que poderao acessar esse servidor por SSH">							<ACTION>/system/clish/bin/firewall.sh list acl-ssh			</ACTION></COMMAND>
+		<COMMAND name="show system firewall group acl-snmp" 		help="Redes que poderao fazer leitura SNMP desse servidor">						<ACTION>/system/clish/bin/firewall.sh list acl-snmp			</ACTION></COMMAND>
+		<COMMAND name="show system firewall group acl-interface"	help="Interfaces que participam do ACL">										<ACTION>/system/clish/bin/firewall.sh list acl-interface	</ACTION></COMMAND>
 
-		<ACTION>
-			/system/clish/bin/users.sh add ${user} ${pass}
-		</ACTION>
-	</COMMAND>
+
+	<!-- DELETE -->
+		<COMMAND name="delete"				help="Deletar configuracao"/>
+		<COMMAND name="delete system"		help="Deletar configuracao do sistema"/>	
+		<COMMAND name="delete system login"	help="Deletar usuario do sistema"/>
+
+		<COMMAND name="delete system login user" 						help="Username">	<PARAM name="user" help="Username" ptype="STRING" optional="false"/><ACTION> /system/clish/bin/users.sh del ${user}</ACTION></COMMAND>
+
+		<COMMAND name="delete system firewall" 							help="Deletar configuracoes de firewall">																																<ACTION>/system/clish/bin/config_del.sh firewal							</ACTION></COMMAND>
+		<COMMAND name="delete system firewall dislabe"					help="Ativar firewall">																	<ACTION>/system/clish/bin/firewall.sh enable									</ACTION></COMMAND>
+		<COMMAND name="delete system firewall group" 					help="Deletar grupos de ips, redes ou portas">																															<ACTION>/system/clish/bin/config_del.sh firewal group					</ACTION></COMMAND>
+		<COMMAND name="delete system firewall group pbr"				help="Deletar redes que irao participar do PBR">										<PARAM name="address" help="IP ou Rede" ptype="IP_ADDR_MASK" optional="true"/>	<ACTION>/system/clish/bin/firewall.sh del pbr "${address}"				</ACTION></COMMAND>
+		<COMMAND name="delete system firewall group static-ip" 			help="Deletar redes publicas sem bloqueio de portas">									<PARAM name="address" help="IP ou Rede" ptype="IP_ADDR_MASK" optional="true"/>	<ACTION>/system/clish/bin/firewall.sh del static-ip "${address}"		</ACTION></COMMAND>
+		<COMMAND name="delete system firewall group cpe-management" 	help="Deletar redes de gerencia que poderao acessar as portas dos IPs com bloqueio">	<PARAM name="address" help="IP ou Rede" ptype="IP_ADDR_MASK" optional="true"/>	<ACTION>/system/clish/bin/firewall.sh del cpe-management "${address}"	</ACTION></COMMAND>
+		<COMMAND name="delete system firewall group cpe-ports" 			help="Deletar portas que serao bloqueadas">												<PARAM name="port" 	  help="Porta"		ptype="PORT" 		 optional="true"/>	<ACTION>/system/clish/bin/firewall.sh del cpe-ports "${port}"			</ACTION></COMMAND>
+		<COMMAND name="delete system firewall group acl-ssh"			help="Deletar redes que poderao acessar esse servidor por SSH">							<PARAM name="address" help="IP ou Rede" ptype="IP_ADDR_MASK" optional="true"/>	<ACTION>/system/clish/bin/firewall.sh del acl-ssh "${address}"			</ACTION></COMMAND>
+		<COMMAND name="delete system firewall group acl-snmp" 			help="Deletar redes que poderao fazer leitura SNMP desse servidor">						<PARAM name="address" help="IP ou Rede" ptype="IP_ADDR_MASK" optional="true"/>	<ACTION>/system/clish/bin/firewall.sh del acl-snmp "${address}"			</ACTION></COMMAND>
+		<COMMAND name="delete system firewall group acl-interface"		help="Deletar interface quer que participa do  ACL">									<PARAM name="ifname"  help="IP ou Rede" ptype="IP_ADDR_MASK" optional="true"/>	<ACTION>/system/clish/bin/firewall.sh del acl-interface "${ifname}"			</ACTION></COMMAND>
+
+
+
+
+	<!-- SET -->	
+		<COMMAND name="set" help="Definir parametros"/>
+
+		<COMMAND name="set system firewall" 						help="Configuracoes de Firewall"/>
+		<COMMAND name="set system firewall enable"					help="Ativar ou desativar o firewall">											<PARAM name="status" help="" ptype="BOOL" optional="false"/><ACTION>/system/clish/bin/firewall.sh enable ${status}</ACTION></COMMAND>
+		<COMMAND name="set system firewall group" 					help="Grupos de IPs, Redes ou Portas"/>			
+		<COMMAND name="set system firewall group pbr"				help="Redes que irao participar do PBR">										<PARAM name="address" help="IP ou Rede" ptype="IP_ADDR_MASK" optional="false"/><ACTION>/system/clish/bin/firewall.sh add pbr "${address}"			</ACTION></COMMAND>
+		<COMMAND name="set system firewall group static-ip" 		help="Redes publicas sem bloqueio de portas">									<PARAM name="address" help="IP ou Rede" ptype="IP_ADDR_MASK" optional="false"/><ACTION>/system/clish/bin/firewall.sh add static-ip "${address}"		</ACTION></COMMAND>		
+		<COMMAND name="set system firewall group cpe-management" 	help="Redes de gerencia que poderao acessar as portas dos IPs com bloqueio">	<PARAM name="address" help="IP ou Rede" ptype="IP_ADDR_MASK" optional="false"/><ACTION>/system/clish/bin/firewall.sh add cpe-management "${address}"</ACTION></COMMAND>		
+		<COMMAND name="set system firewall group cpe-ports" 		help="Portas que serao bloqueadas">												<PARAM name="address" help="Porta" 		ptype="PORT" 		 optional="false"/><ACTION>/system/clish/bin/firewall.sh add cpe-ports "${address}"		</ACTION></COMMAND>
+		<COMMAND name="set system firewall group acl-ssh"			help="Redes que poderao acessar esse servidor por SSH">							<PARAM name="address" help="IP ou Rede" ptype="IP_ADDR_MASK" optional="false"/><ACTION>/system/clish/bin/firewall.sh add acl-ssh "${address}"		</ACTION></COMMAND>
+		<COMMAND name="set system firewall group acl-snmp" 			help="Redes que poderao fazer leitura SNMP desse servidor">						<PARAM name="address" help="IP ou Rede" ptype="IP_ADDR_MASK" optional="false"/><ACTION>/system/clish/bin/firewall.sh add acl-snmp "${address}"		</ACTION></COMMAND>	
+		<COMMAND name="set system firewall group acl-interface"		help="Interfaces que participam do ACL">										<PARAM name="ifname"  help="[eth0, bond0, ipoe+, pppoe+]" ptype="STRING" 	 optional="false"/><ACTION>/system/clish/bin/firewall.sh add acl-interface "${ifname}"		</ACTION></COMMAND>	
+
+
+		<COMMAND name="set system" 			help="Configuracoes do sistema"/>	
+		<COMMAND name="set system login" 	help="Adicionar/Editar usuarios e senhas do sistema"/>
+		<COMMAND name="set system hostname" help="Definir o nome do sistema"> <PARAM name="hostname" help="Nome do sistema" ptype="STRING"/>	<ACTION>sudo /system/clish/bin/hostname.sh ${hostname}</ACTION></COMMAND>
+
+		<!-- SYSTEM LOGIN ADD -->
+		<COMMAND name="set system login user" 	help="Username">
+			<PARAM name="user"					help="Login do usuario" 		ptype="STRING" 		optional="false">				
+				<PARAM name="password"			help="Senha do Usuario"			optional="false" 	mode="subcommand"		ptype="SUBCOMMAND" >
+					<PARAM name="pass"			help="Password"					optional="false"	ptype="STRING"/>							
+				</PARAM>
+			</PARAM>		
+
+			<ACTION>
+				/system/clish/bin/users.sh add ${user} ${pass}
+			</ACTION>
+		</COMMAND>
 
 	
 
 
 <!-- Simple configuration mode commands -->
 
-	<COMMAND name="exit" help="Exit from configure mode" lock="false">
-		<ACTION builtin="clish_close"/>
-	</COMMAND>
+	<COMMAND name="exit" help="Sair do modo de configuracao" lock="false">	<ACTION builtin="clish_close"/>	</COMMAND>
 
-	<COMMAND name="set system hostname" help="Set system's network name">
-		<PARAM name="hostname" help="This system's network name" ptype="STRING"/>
-		<ACTION>
-			/system/clish/bin/hostname.sh ${hostname}			
-		</ACTION>
-	</COMMAND>
 
 </VIEW>
 
