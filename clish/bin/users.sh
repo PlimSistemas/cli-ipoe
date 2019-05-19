@@ -14,7 +14,7 @@
 # DELETE
 #------------------------------------------------
 
-	if [ "$2" == "admin" ]; then
+	if [ "$1" == "del" ] && [ "$2" == "admin" ]; then
 		echo "Nao e permitido excluir o usuario ADMIN"
 		exit 0
 	fi

@@ -1,0 +1,53 @@
+--- accel-ppp.git/accel-pppd/shaper/shaper.c	2018-08-14 12:23:13.415493315 -0300
++++ accel-ppp/accel-pppd/shaper/shaper.c	2018-08-14 17:20:57.397542021 -0300
+@@ -192,8 +192,10 @@
+ static void parse_string_simple(const char *str, int dir, int *speed, int *burst, int *tr_id)
+ {
+ 	char *endptr;
++	char *endstr;
+ 	long int val;
+-
++	long int bandw;
++	
+ 	val = strtol(str, &endptr, 10);
+ 	if (*endptr == 0) {
+ 		*speed = conf_multiplier * val;
+@@ -207,11 +209,33 @@
+ 		*speed = conf_multiplier * val;
+ 		return;
+ 	} else {
+-		if (*endptr == '/' || *endptr == '\\' || *endptr == ':') {
+-			if (dir == ATTR_DOWN)
+-				*speed = conf_multiplier * val;
+-			else
+-				*speed = conf_multiplier * strtol(endptr + 1, &endptr, 10);
++		if (*endptr == 'k' || *endptr == 'K' || *endptr == 'm' || *endptr == 'M') {
++			endstr = endptr;
++			endptr++;
++			if (*endptr == '/' || *endptr == '\\' || *endptr == ':') {
++				if (dir == ATTR_UP) {
++					bandw = conf_multiplier * val;
++					if (*endstr == 'm' || *endstr == 'M') {
++						*speed = bandw * 1024;
++					} else {
++						*speed = bandw;
++					}
++				} else {
++					bandw = conf_multiplier * strtol(endptr + 1, &endptr, 10);
++					if (*endptr == 'm' || *endptr == 'M') {
++						*speed = bandw * 1024;
++					} else {
++						*speed = bandw;
++					}
++				}
++			}
++		} else {
++			if (*endptr == '/' || *endptr == '\\' || *endptr == ':') {
++				if (dir == ATTR_DOWN)
++					*speed = conf_multiplier * val;
++				else
++					*speed = conf_multiplier * strtol(endptr + 1, &endptr, 10);
++			}
+ 		}
+ 	}
+ }

@@ -1,10 +1,4 @@
 #!/bin/bash
-
-	
-#Preparação
-#------------------------------------------------
-	mkdir -p /system
-
 	
 #Atualizando Pacotes
 #------------------------------------------------
@@ -13,6 +7,14 @@
 	apt install -y --no-install-recommends psmisc git git-core make cmake zlib1g-dev liblua5.1-dev libpcre3-dev build-essential libssl-dev libsnmp-dev linux-headers-`uname -r`
 	apt install -y --no-install-recommends dh-autoreconf libexpat1-dev telnet ntpdate ipset unzip sqlite3 libsqlite3-dev snmp snmpd facter
 
+
+#Preparação
+#------------------------------------------------
+	mkdir -p /system
+	cd /usr/local/src
+	git clone https://github.com/PlimSistemas/cli-ipoe.git cli-ipoe
+	
+	
 
 #Instalando o FRR
 #------------------------------------------------
@@ -34,11 +36,14 @@
 
 #Instalando Accel-ppp
 #------------------------------------------------
-	cd /usr/local/src
-	git clone git://git.code.sf.net/p/accel-ppp/code accel-ppp-code
-	mkdir -p accel-ppp-build
-	cd accel-ppp-build
-	cmake -DKDIR=/usr/src/linux-headers-`uname -r` -DBUILD_DRIVER=FALSE -DRADIUS=TRUE -DNETSNMP=TRUE -DSHAPER=TRUE -DLOG_PGSQL=FALSE -DLUA=TRUE -DBUILD_IPOE_DRIVER=TRUE -DBUILD_VLAN_MON_DRIVER=TRUE ../accel-ppp-code
+	mkdir -p cd /usr/local/src/accel-ppp-build
+	git clone git://git.code.sf.net/p/accel-ppp/code /usr/local/src/accel-ppp-code
+	
+	cd /usr/local/src/accel-ppp-code
+	patch -p 1 < /usr/local/src/cli-ipoe/patch/accel-ppp-shaper-mk-rate-limit.patch
+	
+	cd /usr/local/src/accel-ppp-build
+	cmake -DCPACK_TYPE=Debian9 -DKDIR=/usr/src/linux-headers-`uname -r` -DBUILD_DRIVER=FALSE -DRADIUS=TRUE -DNETSNMP=TRUE -DSHAPER=TRUE -DLOG_PGSQL=FALSE -DLUA=TRUE -DBUILD_IPOE_DRIVER=TRUE -DBUILD_VLAN_MON_DRIVER=TRUE ../accel-ppp-code
 	make
 	make install
 
@@ -240,43 +245,7 @@
     chmod +x /etc/cron.daily/backup_to_gdrive.sh
 	
 	
-#Criando Script de Firewall
-#------------------------------------------------
-	mkdir -p /system/firewall
-	touch /system/firewall/ipset.conf
-	touch /system/firewall/iptables.conf
-	
-	(
-		echo "#!/bin/bash"
-		echo 
-		echo "#Limpa Firewall"
-		echo "#------------------------------------------------"
-		echo "	iptables -F -t filter"
-		echo "	iptables -F -t nat"
-		echo "	iptables -F -t mangle"
-		echo "	iptables -F -t raw"
-		echo 
-		echo "	iptables -X -t filter"
-		echo "	iptables -X -t nat"
-		echo "	iptables -X -t mangle"
-		echo "	iptables -X -t raw"
-		echo 
-		echo "#Cria lista de IPs"
-		echo "#------------------------------------------------"
-		echo "	ipset destroy"
-		echo "	ipset restore < /system/firewall/ipset.conf"
-		echo 
-		echo 
-		echo "#Carrega Firewall"
-		echo "#------------------------------------------------"
-		echo "	iptables-restore < /system/firewall/iptables.conf"
-	) > /system/firewall/firewall.sh
 
-	chmod +x /system/firewall/firewall.sh
-	ln -s /system/firewall/firewall.sh /usr/local/bin/firewall
-	
-	
-	
 #Configurando NTP Client
 #------------------------------------------------
 	timedatectl set-timezone America/Sao_Paulo
@@ -305,10 +274,15 @@
 #Instalar configs e CLI config
 #------------------------------------------------	
 	cd /usr/local/src
-	git clone https://github.com/PlimSistemas/cli-ipoe.git cli-ipoe
 
 	mv /usr/local/src/cli-ipoe/clish/ /system
 	mv /usr/local/src/cli-ipoe/db/ /system
+	
+	
+	mv /usr/local/src/cli-ipoe/firewall/ /system
+	chmod +x /system/firewall/firewall.sh
+	ln -s /system/firewall/firewall.sh /usr/local/bin/firewall
+	
 
 	mv /usr/local/src/cli-ipoe/configs/accel-ppp/ /system/configs
 	mv /usr/local/src/cli-ipoe/configs/snmp/ /system/configs
@@ -320,16 +294,17 @@
 	
 	ln -s /system/configs/accel-ppp/* /etc/ 
 	ln -s /system/clish /etc/
-		
+	
+
+	cp /usr/local/src/cli-ipoe/dictionary/dictionary.mikrotik /usr/local/share/accel-ppp/radius/
+	cp /usr/local/src/cli-ipoe/dictionary/dictionary.rfc6911 /usr/local/share/accel-ppp/radius/
+	cat /usr/local/src/cli-ipoe/dictionary/dictionary.custom >> /usr/local/share/accel-ppp/radius/dictionary  
+	
 	
 #Outros
 #------------------------------------------------
 	
-	(
-		echo
-		echo 'export HOSTNAME=$(hostname)'
-	) >> /etc/profile
-	
+	echo 'export HOSTNAME=$(hostname)' >> /etc/profile	
 	source /etc/profile
 	
 	groupadd CLI
