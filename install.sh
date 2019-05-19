@@ -87,6 +87,10 @@
 	systemctl is-enabled accel-ppp.service
 	systemctl enable accel-ppp.service
 
+	chmod +x /etc/init.d/accel-ppp
+	update-rc.d accel-ppp defaults
+
+
 
 #Log Rotativo do Accel-ppp
 #------------------------------------------------
