@@ -37,6 +37,16 @@
 	
 #Instalando SNMP
 #------------------------------------------------
+	mkdir -p $HOME/.snmp/mibs
+	mkdir -p /usr/share/snmp/mibs
+	mkdir -p /usr/share/snmp/mibs/iana
+	mkdir -p /usr/share/snmp/mibs/ietf
+	mkdir -p /usr/share/mibs/site
+	mkdir -p /usr/share/snmp/mibs
+	mkdir -p /usr/share/mibs/iana
+	mkdir -p /usr/share/mibs/ietf
+	mkdir -p /usr/share/mibs/netsnmp
+	
 	unzip /usr/local/src/cli-ipoe/others/net-snmp-5.8.zip -d /usr/local/src/
 	cd /usr/local/src/net-snmp-5.8
 	
@@ -58,25 +68,20 @@
 	patch -p 1 < /usr/local/src/cli-ipoe/patch/accel-ppp-shaper-mk-rate-limit.patch
 	
 	cd /usr/local/src/accel-ppp-build
-	cmake -DCPACK_TYPE=Debian9 -DKDIR=/usr/src/linux-headers-`uname -r` -DBUILD_DRIVER=FALSE -DRADIUS=TRUE -DNETSNMP=TRUE -DSHAPER=TRUE -DLOG_PGSQL=FALSE -DLUA=TRUE -DBUILD_IPOE_DRIVER=TRUE -DBUILD_VLAN_MON_DRIVER=TRUE ../accel-ppp-code
+	cmake -DCMAKE_INSTALL_PREFIX=/usr -DCPACK_TYPE=Debian9 -DKDIR=/usr/src/linux-headers-`uname -r` -DBUILD_DRIVER=FALSE -DRADIUS=TRUE -DNETSNMP=TRUE -DSHAPER=TRUE -DLOG_PGSQL=FALSE -DLUA=TRUE -DBUILD_IPOE_DRIVER=TRUE -DBUILD_VLAN_MON_DRIVER=TRUE ../accel-ppp-code
 	make
 	make install
+	
+	#dicionarios
+	cp /usr/local/src/cli-ipoe/dictionary/dictionary.mikrotik /usr/share/accel-ppp/radius/
+	cp /usr/local/src/cli-ipoe/dictionary/dictionary.rfc6911 /usr/share/accel-ppp/radius/
+	cat /usr/local/src/cli-ipoe/dictionary/dictionary.custom >> /usr/share/accel-ppp/radius/dictionary
+	
 
 	mkdir -p /var/log/accel-ppp
 	chmod -R a+rwX /var/log/accel-ppp
 	chmod -R a+rwX /var/log/accel-ppp/*
 
-	echo "ATTRIBUTE DHCP-Router-IP-Address 241 ipaddr" >> /usr/local/share/accel-ppp/radius/dictionary
-	echo "ATTRIBUTE DHCP-Mask 242 integer" >> /usr/local/share/accel-ppp/radius/dictionary
-	echo "ATTRIBUTE L4-Redirect 243 integer" >> /usr/local/share/accel-ppp/radius/dictionary
-	echo "ATTRIBUTE L4-Redirect-ipset 244 string" >> /usr/local/share/accel-ppp/radius/dictionary
-	echo "ATTRIBUTE DHCP-Option82 245 octets" >> /usr/local/share/accel-ppp/radius/dictionary
-	echo "#ATTRIBUTE DHCP-Agent-Circuit-Id	1 octets" >> /usr/local/share/accel-ppp/radius/dictionary
-	echo "#ATTRIBUTE DHCP-Agent-Remote-Id	2 octets" >> /usr/local/share/accel-ppp/radius/dictionary
-	echo "ATTRIBUTE AccelRemoteId 246 octets" >> /usr/local/share/accel-ppp/radius/dictionary
-	echo "ATTRIBUTE AccelCircuitId 247 octets" >> /usr/local/share/accel-ppp/radius/dictionary
-	echo "#ATTRIBUTE DHCP-Attr-272 272 ipaddr" >> /usr/local/share/accel-ppp/radius/dictionary
-	
 	mkdir -p /lib/modules/`uname -r`/accel
 	cp /usr/local/src/accel-ppp-build/drivers/ipoe/driver/ipoe.ko /lib/modules/`uname -r`/accel/
 	cp /usr/local/src/accel-ppp-build/drivers/vlan_mon/driver/vlan_mon.ko /lib/modules/`uname -r`/accel/
@@ -94,7 +99,7 @@
 	modprobe ipoe
 	modprobe vlan_mon
 
-	sed -i 's/\/usr\/sbin\/accel-pppd/\/usr\/local\/sbin\/accel-pppd/g' /usr/local/src/accel-ppp-code/contrib/debian/accel-ppp-init
+	#sed -i 's/\/usr\/sbin\/accel-pppd/\/usr\/local\/sbin\/accel-pppd/g' /usr/local/src/accel-ppp-code/contrib/debian/accel-ppp-init
 	cp /usr/local/src/accel-ppp-code/contrib/debian/accel-ppp-init /etc/init.d/accel-ppp
 	chmod +x /etc/init.d/accel-ppp
 	update-rc.d accel-ppp defaults
@@ -248,11 +253,11 @@
 		echo "tar -cf /backup/$FILENAME /etc/network/interfaces"
 		echo "tar -rf /backup/$FILENAME /system/firewall/ipset.conf"
 		echo "tar -rf /backup/$FILENAME /system/firewall/iptables.conf"
-		echo "tar -rf /backup/$FILENAME /etc/accel-ppp.conf"
-		echo "tar -rf /backup/$FILENAME /etc/accel-ppp.lua"
-		echo "tar -rf /backup/$FILENAME /etc/chap-secrets"
-		echo "tar -rf /backup/$FILENAME /etc/snmp/snmpd.conf"
-		echo "tar -rf /backup/$FILENAME /etc/frr/frr.conf"
+		echo "tar -rf /backup/$FILENAME /system/configs/accel/accel-ppp.conf"
+		echo "tar -rf /backup/$FILENAME /system/configs/accel/accel-ppp.lua"
+		echo "tar -rf /backup/$FILENAME /system//configs/accel/chap-secrets"
+		echo "tar -rf /backup/$FILENAME /system/configs/snmp/snmpd.conf"
+		echo "tar -rf /backup/$FILENAME /system/configs/frr/frr.conf"
 		echo "tar -rf /backup/$FILENAME ~/.gdrive"
 		echo
 		echo "#para obter a pasta use o comando: gdrive list --absolute --name-width 100 -m 100"
@@ -273,8 +278,8 @@
 	
 #Google Drive Client
 #------------------------------------------------
-	wget -O /usr/local/bin/gdrive https://docs.google.com/uc?id=0B3X9GlR6EmbnQ0FtZmJJUXEyRTA&export=download && chmod +x /usr/local/bin/gdrive
-	
+	cp /usr/loca/src/cli-ipoe/others/gdrive-linux-x64 /usr/local/bin/gdrive
+	chmod +x /usr/local/bin/gdrive
 
 #Instalar klish
 #------------------------------------------------
@@ -313,12 +318,7 @@
 	
 	ln -s /system/configs/accel-ppp/* /etc/ 
 	ln -s /system/clish /etc/
-	
 
-	cp /usr/local/src/cli-ipoe/dictionary/dictionary.mikrotik /usr/local/share/accel-ppp/radius/
-	cp /usr/local/src/cli-ipoe/dictionary/dictionary.rfc6911 /usr/local/share/accel-ppp/radius/
-	cat /usr/local/src/cli-ipoe/dictionary/dictionary.custom >> /usr/local/share/accel-ppp/radius/dictionary  
-	
 	
 #Outros
 #------------------------------------------------
