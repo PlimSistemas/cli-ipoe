@@ -5,7 +5,7 @@
 	apt update
 	apt install -y --no-install-recommends sudo net-tools curl nmap tcpdump htop atop mtr vlan ethtool apt-transport-https ca-certificates mc bmon vlan ifenslave-2.6
 	apt install -y --no-install-recommends psmisc git git-core make cmake zlib1g-dev liblua5.1-dev libpcre3-dev build-essential libssl-dev libsnmp-dev linux-headers-`uname -r`
-	apt install -y --no-install-recommends dh-autoreconf libexpat1-dev telnet ntpdate ipset unzip sqlite3 libsqlite3-dev snmp snmpd facter
+	apt install -y --no-install-recommends dh-autoreconf libexpat1-dev telnet ntpdate ipset unzip sqlite3 libsqlite3-dev facter libperl-dev
 
 
 #Preparação
@@ -33,6 +33,21 @@
 	
 	/etc/init.d/frr restart
 	
+	
+	
+#Instalando SNMP
+#------------------------------------------------
+	unzip /usr/local/src/cli-ipoe/others/net-snmp-5.8.zip -d /usr/local/src/
+	cd /usr/local/src/net-snmp-5.8
+	
+	patch -p 1 < /usr/local/src/cli-ipoe/patch/net-snmp-ignore-interfaces.patch
+	./configure --with-default-snmp-version="2" --with-sys-contact="noc" --with-sys-location="noc" --with-logfile="/var/log/snmpd.log" --with-persistent-directory="/var/net-snmp" --exec_prefix=/usr --prefix=/usr --without-openssl --without-perl-modules --without-python-modules --disable-embedded-perl --disable-shared --enable-static --enable-ipv6
+	make
+	make install
+
+	cp /usr/local/src/cli-ipoe/others/snmpd /etc/init.d/
+	chmod +x /etc/init.d/snmpd
+	update-rc.d snmpd defaults
 
 #Instalando Accel-ppp
 #------------------------------------------------
