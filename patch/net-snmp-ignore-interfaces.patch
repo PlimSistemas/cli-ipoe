@@ -1,165 +1,152 @@
 diff -ENwbur a/agent/mibgroup/etherlike-mib/data_access/dot3stats_linux.c b/agent/mibgroup/etherlike-mib/data_access/dot3stats_linux.c
---- a/agent/mibgroup/etherlike-mib/data_access/dot3stats_linux.c	2019-05-22 09:32:46.291560205 -0300
-+++ b/agent/mibgroup/etherlike-mib/data_access/dot3stats_linux.c	2019-05-22 09:32:46.251560899 -0300
-@@ -122,6 +122,9 @@
-     struct ifreq    ifrq;
-     int rc = 0;
+--- a/agent/mibgroup/etherlike-mib/data_access/dot3stats_linux.c	2019-05-26 07:34:29.861529615 -0300
++++ b/agent/mibgroup/etherlike-mib/data_access/dot3stats_linux.c	2019-05-26 07:34:44.985306314 -0300
+@@ -526,7 +526,7 @@
+     u_long value;
+     dot3StatsTable_data *data = &rowreq_ctx->data;
+     FILE *dev;
+-    const char NETDEV_FILE[] = "/proc/net/dev";
++    const char NETDEV_FILE[] = "/tmp/proc/net/dev";
  
-+    if (netsnmp_access_interface_ignore(name))
-+        return 0;
-+
-     DEBUGMSGTL(("access:dot3StatsTable:interface_ioctl_ifindex_get", "called\n"));
-                  
-     rc = _dot3Stats_ioctl_get(fd, SIOCGIFINDEX, &ifrq, name);
-diff -ENwbur a/agent/mibgroup/if-mib/data_access/interface.c b/agent/mibgroup/if-mib/data_access/interface.c
---- a/agent/mibgroup/if-mib/data_access/interface.c	2019-05-22 09:32:46.303559997 -0300
-+++ b/agent/mibgroup/if-mib/data_access/interface.c	2019-05-22 09:34:31.965731259 -0300
-@@ -32,6 +32,7 @@
- static netsnmp_conf_if_list *conf_list = NULL;
- static int need_wrap_check = -1;
- static int _access_interface_init = 0;
-+static netsnmp_ignore_if_list *ignore_list = NULL;
- 
- /*
-  * local static prototypes
-@@ -45,6 +46,8 @@
- static void _access_interface_entry_save_name(const char *name, oid index);
- static void _parse_interface_config(const char *token, char *cptr);
- static void _free_interface_config(void);
-+static void _parse_ignore_if_config(const char *token, char *cptr);
-+static void _free_ignore_if_config(void);
- 
- 
- /**
-@@ -56,6 +59,9 @@
-     snmpd_register_config_handler("interface", _parse_interface_config,
-                                   _free_interface_config,
-                                   "name type speed");
-+    snmpd_register_config_handler("ignore_if", _parse_ignore_if_config,
-+                                  _free_ignore_if_config,
-+                                  "name");
- }
- 
- 
-@@ -782,6 +788,20 @@
-     }
- }
- 
-+int netsnmp_access_interface_ignore(const char * name)
-+{
-+	if(strstr(name, "dummy") != NULL)
-+		return 1;
-+	else if(strstr(name, "pppoe") != NULL)
-+		return 1;
-+	else if(strstr(name, "ppp") != NULL)
-+		return 1;
-+	else if(strstr(name, "ipoe") != NULL)
-+		return 1;
-+
-+	return 0;
-+}
-+
- /**---------------------------------------------------------------------*/
- /*
-  * interface config token
-@@ -857,3 +877,58 @@
-     }
-     conf_list = NULL;
- }
-+
-+/**---------------------------------------------------------------------*/
-+/*
-+ * ignore interface config token
-+ */
-+/**
-+ */
-+static void
-+_parse_ignore_if_config(const char *token, char *cptr)
-+{
-+    netsnmp_ignore_if_list *if_ptr, *if_new;
-+    char                   *name, *st;
-+
-+    name = strtok_r(cptr, " \t", &st);
-+    if (!name) {
-+        config_perror("Missing NAME parameter");
-+        return;
-+    }
-+    if_ptr = ignore_list;
-+    while (if_ptr)
-+        if (strcmp(if_ptr->name, name))
-+            if_ptr = if_ptr->next;
-+        else
-+            break;
-+    if (if_ptr) {
-+        config_pwarn("Duplicate ignore interface specification");
-+        return;
-+    }
-+    if_new = SNMP_MALLOC_TYPEDEF(netsnmp_ignore_if_list);
-+    if (!if_new) {
-+        config_perror("Out of memory");
-+        return;
-+    }
-+    if_new->name = strdup(name);
-+    if (!if_new->name) {
-+        config_perror("Out of memory");
-+        free(if_new);
-+        return;
-+    }
-+    if_new->next = ignore_list;
-+    ignore_list = if_new;
-+}
-+
-+static void
-+_free_ignore_if_config(void)
-+{
-+    netsnmp_ignore_if_list   *if_ptr = ignore_list, *if_next;
-+    while (if_ptr) {
-+        if_next = if_ptr->next;
-+        free(NETSNMP_REMOVE_CONST(char *, if_ptr->name));
-+        free(if_ptr);
-+        if_ptr = if_next;
-+    }
-+    ignore_list = NULL;
-+}
+     if (_dot3Stats_netlink_get_errorcntrs(rowreq_ctx, name) == 0)
+     {
 diff -ENwbur a/agent/mibgroup/if-mib/data_access/interface_linux.c b/agent/mibgroup/if-mib/data_access/interface_linux.c
---- a/agent/mibgroup/if-mib/data_access/interface_linux.c	2019-05-22 09:32:46.331559511 -0300
-+++ b/agent/mibgroup/if-mib/data_access/interface_linux.c	2019-05-22 09:32:46.207561662 -0300
-@@ -700,6 +700,9 @@
-          */
-         *stats++ = 0; /* null terminate name */
+--- a/agent/mibgroup/if-mib/data_access/interface_linux.c	2019-05-26 07:34:30.405519208 -0300
++++ b/agent/mibgroup/if-mib/data_access/interface_linux.c	2019-05-26 07:34:45.549301633 -0300
+@@ -591,7 +591,7 @@
+  *
+  * @retval  0 success
+  * @retval -1 no container specified
+- * @retval -2 could not open /proc/net/dev
++ * @retval -2 could not open /tmp/proc/net/dev
+  * @retval -3 could not create entry (probably malloc)
+  */
+ int
+@@ -615,10 +615,10 @@
+         return -1;
+     }
  
-+        if (netsnmp_access_interface_ignore(ifstart))
-+            continue;
-+
-         if_index = netsnmp_arch_interface_index_find(ifstart);
+-    if (!(devin = fopen("/proc/net/dev", "r"))) {
++    if (!(devin = fopen("/tmp/proc/net/dev", "r"))) {
+         DEBUGMSGTL(("access:interface",
+                     "Failed to load Interface Table (linux1)\n"));
+-        snmp_log_perror("interface_linux: cannot open /proc/net/dev");
++        snmp_log_perror("interface_linux: cannot open /tmp/proc/net/dev");
+         return -2;
+     }
  
-         /*
+@@ -655,11 +655,11 @@
+         if (strstr(line, "compressed")) {
+             scan_expected = 10;
+             DEBUGMSGTL(("access:interface",
+-                        "using linux 2.2 kernel /proc/net/dev\n"));
++                        "using linux 2.2 kernel /tmp/proc/net/dev\n"));
+         } else {
+             scan_expected = 5;
+             DEBUGMSGTL(("access:interface",
+-                        "using linux 2.0 kernel /proc/net/dev\n"));
++                        "using linux 2.0 kernel /tmp/proc/net/dev\n"));
+         }
+     }
+ 
+diff -ENwbur a/agent/mibgroup/ip-mib/data_access/ipaddress_ioctl.c b/agent/mibgroup/ip-mib/data_access/ipaddress_ioctl.c
+--- a/agent/mibgroup/ip-mib/data_access/ipaddress_ioctl.c	2019-05-26 07:34:30.741512780 -0300
++++ b/agent/mibgroup/ip-mib/data_access/ipaddress_ioctl.c	2019-05-26 07:34:45.893298778 -0300
+@@ -655,6 +655,8 @@
+ int
+ netsnmp_access_ipaddress_ioctl_get_interface_count(int sd, struct ifconf * ifc)
+ {
++	return -1;
++	
+     int lastlen = 0, i;
+     struct ifconf ifc_tmp;
+ 
 diff -ENwbur a/agent/mibgroup/ip-mib/data_access/ipaddress_linux.c b/agent/mibgroup/ip-mib/data_access/ipaddress_linux.c
---- a/agent/mibgroup/ip-mib/data_access/ipaddress_linux.c	2019-05-22 09:32:46.363558957 -0300
-+++ b/agent/mibgroup/ip-mib/data_access/ipaddress_linux.c	2019-05-22 09:32:46.227561315 -0300
-@@ -262,6 +262,10 @@
-         DEBUGMSGTL(("access:ipaddress:container",
-                     "addr %s, index %d, pfx %d, scope %d, flags 0x%X, name %s\n",
-                     addr, if_index, pfx_len, scope, flags, if_name));
-+
-+        if (netsnmp_access_interface_ignore(if_name))
-+            continue;
-+
-         /*
-          */
-         entry = netsnmp_access_ipaddress_entry_create();
-diff -ENwbur a/include/net-snmp/data_access/interface.h b/include/net-snmp/data_access/interface.h
---- a/include/net-snmp/data_access/interface.h	2019-05-22 09:32:46.255560829 -0300
-+++ b/include/net-snmp/data_access/interface.h	2019-05-22 09:32:46.147562703 -0300
-@@ -204,6 +204,11 @@
+--- a/agent/mibgroup/ip-mib/data_access/ipaddress_linux.c	2019-05-26 07:34:30.749512627 -0300
++++ b/agent/mibgroup/ip-mib/data_access/ipaddress_linux.c	2019-05-26 07:34:45.901298712 -0300
+@@ -232,7 +232,7 @@
+     
+     netsnmp_assert(NULL != container);
  
-     typedef netsnmp_conf_if_list conf_if_list; /* backwards compat */
+-#define PROCFILE "/proc/net/if_inet6"
++#define PROCFILE "/tmp/proc/net/if_inet6"
+     if (!(in = fopen(PROCFILE, "r"))) {
+         snmp_log_perror("ipaddress_linux: could not open " PROCFILE);
+         return -2;
+diff -ENwbur a/agent/mibgroup/ip-mib/data_access/ipv6scopezone_linux.c b/agent/mibgroup/ip-mib/data_access/ipv6scopezone_linux.c
+--- a/agent/mibgroup/ip-mib/data_access/ipv6scopezone_linux.c	2019-05-26 07:34:30.777512092 -0300
++++ b/agent/mibgroup/ip-mib/data_access/ipv6scopezone_linux.c	2019-05-26 07:34:45.929298479 -0300
+@@ -66,7 +66,7 @@
+     
+     netsnmp_assert(NULL != container);
  
-+typedef struct _ignore_if_list {
-+    const char     *name;
-+    struct _ignore_if_list *next;
-+} netsnmp_ignore_if_list;
-+
- /**---------------------------------------------------------------------*/
- /*
-  * ACCESS function prototypes
+-#define PROCFILE "/proc/net/if_inet6"
++#define PROCFILE "/tmp/proc/net/if_inet6"
+     if (!(in = fopen(PROCFILE, "r"))) {
+         DEBUGMSGTL(("access:scopezone:container","could not open " PROCFILE "\n"));
+         return -2;
+diff -ENwbur a/agent/mibgroup/mibII/interfaces.c b/agent/mibgroup/mibII/interfaces.c
+--- a/agent/mibgroup/mibII/interfaces.c	2019-05-26 07:34:24.585630573 -0300
++++ b/agent/mibgroup/mibII/interfaces.c	2019-05-26 07:34:40.229345546 -0300
+@@ -1557,9 +1557,9 @@
+     /*
+      * at least linux v1.3.53 says EMFILE without reason... 
+      */
+-    if (!(devin = fopen("/proc/net/dev", "r"))) {
++    if (!(devin = fopen("/tmp/proc/net/dev", "r"))) {
+         close(fd);
+-        NETSNMP_LOGONCE((LOG_ERR, "cannot open /proc/net/dev.\n"));
++        NETSNMP_LOGONCE((LOG_ERR, "cannot open /tmp/proc/net/dev.\n"));
+         return; /** exit (1); **/
+     }
+ 
+@@ -1576,11 +1576,11 @@
+     if (strstr(line, "compressed")) {
+         scan_line_to_use = scan_line_2_2;
+         DEBUGMSGTL(("mibII/interfaces",
+-                    "using linux 2.2 kernel /proc/net/dev\n"));
++                    "using linux 2.2 kernel /tmp/proc/net/dev\n"));
+     } else {
+         scan_line_to_use = scan_line_2_0;
+         DEBUGMSGTL(("mibII/interfaces",
+-                    "using linux 2.0 kernel /proc/net/dev\n"));
++                    "using linux 2.0 kernel /tmp/proc/net/dev\n"));
+     }
+ 
+ 
+@@ -1596,12 +1596,12 @@
+ 
+         if (!*ifstart || ((stats = strrchr(ifstart, ':')) == NULL)) {
+             snmp_log(LOG_ERR,
+-                     "/proc/net/dev data format error, line ==|%s|", line);
++                     "/tmp/proc/net/dev data format error, line ==|%s|", line);
+             continue;
+         }
+         if ((scan_line_to_use == scan_line_2_2) && ((stats - line) < 6)) {
+             snmp_log(LOG_ERR,
+-                     "/proc/net/dev data format error, line ==|%s|", line);
++                     "/tmp/proc/net/dev data format error, line ==|%s|", line);
+         }
+ 
+         *stats   = 0;
+@@ -1621,7 +1621,7 @@
+             if ((scan_line_to_use == scan_line_2_2)
+                 && !strstr(line, "No statistics available"))
+                 snmp_log(LOG_ERR,
+-                         "/proc/net/dev data format error, line ==|%s|",
++                         "/tmp/proc/net/dev data format error, line ==|%s|",
+                          line);
+             continue;
+         }
+diff -ENwbur a/agent/mibgroup/mibII/ipv6.c b/agent/mibgroup/mibII/ipv6.c
+--- a/agent/mibgroup/mibII/ipv6.c	2019-05-26 07:34:24.641629501 -0300
++++ b/agent/mibgroup/mibII/ipv6.c	2019-05-26 07:34:40.289345053 -0300
+@@ -2556,7 +2556,7 @@
+   free(ifni);					\
+ }
+ 
+-#define LINUX_PROC_NET_IFINET6 "/proc/net/if_inet6"
++#define LINUX_PROC_NET_IFINET6 "/tmp/proc/net/if_inet6"
+ struct if_nameindex *
+ linux_if_nameindex(void)
+ {

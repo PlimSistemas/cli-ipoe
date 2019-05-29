@@ -142,6 +142,9 @@
 	#Delete interfaces ACL
 	sed -i '/^-A FW_LOCAL_HOOK -i/d' /system/firewall/iptables.conf
 	
+	#Delete PBR
+	sed -i '/^-A CGNAT -m comment --comment/d' /system/firewall/iptables.conf
+
 	
 	#Adiciona Interface ACL
 	list=$(sql_exec "select value1 from configs where path = 'system firewall group acl-interface';" | tr '\n' ' ')
@@ -149,9 +152,18 @@
 	
 	for aux in "${ifname[@]}";
 	do
-		sed -i "/^#PROTECT-BEGIN/a -A FW_LOCAL_HOOK -i $aux -j    RE-PROTECT" iptables.conf
+		sed -i "/^#PROTECT-BEGIN/a -A FW_LOCAL_HOOK -i $aux -j    RE-PROTECT" /system/firewall/iptables.conf
 	done	
 	
+
+	#Adiciona PBR
+	list=$(sql_exec "select value1 from configs where path = 'system firewall group pbr';" | tr '\n' ' ')
+	read -a redes <<< "$list"
+	
+	for aux in "${redes[@]}";
+	do
+		sed -i "/^#PBR-BEGIN/a -A CGNAT -m comment --comment \"CGNAT\" --source $aux --destination 0.0.0.0/0 -j PBR_2" /system/firewall/iptables.conf
+	done	
 	
 	
 	iptables-restore < /system/firewall/iptables.conf

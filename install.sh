@@ -29,7 +29,7 @@
 	
 	mkdir -p /system/configs/frr
 	mv /etc/frr/frr.conf /system/configs/frr/
-	ln -s /system/configs/frr/frr.confg /etc/frr/frr.conf
+	ln -s /system/configs/frr/frr.conf /etc/frr/frr.conf
 	
 	/etc/init.d/frr restart
 	
@@ -37,21 +37,11 @@
 	
 #Instalando SNMP
 #------------------------------------------------
-	mkdir -p $HOME/.snmp/mibs
-	mkdir -p /usr/share/snmp/mibs
-	mkdir -p /usr/share/snmp/mibs/iana
-	mkdir -p /usr/share/snmp/mibs/ietf
-	mkdir -p /usr/share/mibs/site
-	mkdir -p /usr/share/snmp/mibs
-	mkdir -p /usr/share/mibs/iana
-	mkdir -p /usr/share/mibs/ietf
-	mkdir -p /usr/share/mibs/netsnmp
-	
 	unzip /usr/local/src/cli-ipoe/others/net-snmp-5.8.zip -d /usr/local/src/
 	cd /usr/local/src/net-snmp-5.8
 	
 	patch -p 1 < /usr/local/src/cli-ipoe/patch/net-snmp-ignore-interfaces.patch
-	./configure --with-default-snmp-version="2" --with-sys-contact="noc" --with-sys-location="noc" --with-logfile="/var/log/snmpd.log" --with-persistent-directory="/var/net-snmp" --exec_prefix=/usr --prefix=/usr --without-openssl --without-perl-modules --without-python-modules --disable-embedded-perl --disable-shared --enable-static --enable-ipv6
+	./configure --with-default-snmp-version="2" --with-sys-contact="noc" --with-sys-location="noc" --with-logfile="/var/log/snmpd.log" --with-persistent-directory="/var/net-snmp" --exec_prefix=/usr --prefix=/usr
 	make
 	make install
 
@@ -71,6 +61,8 @@
 	cmake -DCMAKE_INSTALL_PREFIX=/usr -DCPACK_TYPE=Debian9 -DKDIR=/usr/src/linux-headers-`uname -r` -DBUILD_DRIVER=FALSE -DRADIUS=TRUE -DNETSNMP=TRUE -DSHAPER=TRUE -DLOG_PGSQL=FALSE -DLUA=TRUE -DBUILD_IPOE_DRIVER=TRUE -DBUILD_VLAN_MON_DRIVER=TRUE ../accel-ppp-code
 	make
 	make install
+	
+	cp /usr/local/src/net-snmp-5.8/mibs/* /usr/share/snmp/mibs/
 	
 	#dicionarios
 	cp /usr/local/src/cli-ipoe/dictionary/dictionary.mikrotik /usr/share/accel-ppp/radius/
@@ -99,18 +91,11 @@
 	modprobe ipoe
 	modprobe vlan_mon
 
-	#sed -i 's/\/usr\/sbin\/accel-pppd/\/usr\/local\/sbin\/accel-pppd/g' /usr/local/src/accel-ppp-code/contrib/debian/accel-ppp-init
-	cp /usr/local/src/accel-ppp-code/contrib/debian/accel-ppp-init /etc/init.d/accel-ppp
 	chmod +x /etc/init.d/accel-ppp
 	update-rc.d accel-ppp defaults
 	
 	systemctl is-enabled accel-ppp.service
 	systemctl enable accel-ppp.service
-
-	chmod +x /etc/init.d/accel-ppp
-	update-rc.d accel-ppp defaults
-
-
 
 #Log Rotativo do Accel-ppp
 #------------------------------------------------
@@ -319,6 +304,42 @@
 	ln -s /system/configs/accel-ppp/* /etc/ 
 	ln -s /system/clish /etc/
 
+	mv /usr/local/src/cli-ipoe/others/net-snmp-ignore-if /sbin/
+	chmod +x /sbin/net-snmp-ignore-if
+
+
+#Configurando rc.local
+#------------------------------------------------	
+	(
+		echo '[Unit]'
+		echo 'Description=/etc/rc.local'
+		echo 'ConditionPathExists=/etc/rc.local'
+		echo
+		echo '[Service]'
+		echo 'Type=forking'
+		echo 'ExecStart=/etc/rc.local start'
+		echo 'TimeoutSec=0'
+		echo 'StandardOutput=tty'
+		echo 'RemainAfterExit=yes'
+		echo 'SysVStartPriority=99'
+		echo
+		echo '[Install]'
+		echo 'WantedBy=multi-user.target'
+	) > /etc/systemd/system/rc-local.service
+
+
+	(
+		echo '#!/bin/sh -e'
+		echo
+		echo '/sbin/net-snmp-ignore-if || exit 0'
+		echo '/system/firewall/firewall.sh || exit 0'
+		echo
+		echo 'exit 0'
+	) > /etc/rc.local
+	
+	chmod +x /etc/rc.local	
+	systemctl enable rc-local
+	systemctl start rc-local
 	
 #Outros
 #------------------------------------------------
@@ -357,7 +378,7 @@
 		echo "*                                                              *"
 		echo "*  A user was created to access SSH                            *"
 		echo "*  Login....: admin                                            *"
-		echo "*  Password.: admin@123                                        *"
+		echo "*  Password.: accel                                            *"
 		echo "*                                                              *"
 		echo "*  To change the password                                      *"
 		echo "*  > configure                                                 *"
