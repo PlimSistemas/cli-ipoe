@@ -5,7 +5,7 @@
 	apt update
 	apt install -y --no-install-recommends sudo net-tools curl nmap tcpdump htop atop mtr vlan ethtool apt-transport-https ca-certificates mc bmon vlan ifenslave-2.6
 	apt install -y --no-install-recommends psmisc git git-core make cmake zlib1g-dev liblua5.1-dev libpcre3-dev build-essential libssl-dev libsnmp-dev linux-headers-`uname -r`
-	apt install -y --no-install-recommends dh-autoreconf libexpat1-dev telnet ntpdate ipset unzip sqlite3 libsqlite3-dev facter libperl-dev iptraf
+	apt install -y --no-install-recommends dh-autoreconf libexpat1-dev telnet ntpdate ipset unzip sqlite3 libsqlite3-dev facter libperl-dev iptraf conntrack
 
 
 #Preparação
@@ -123,22 +123,23 @@
 		echo "net.ipv4.neigh.default.gc_thresh2 = 8192"
 		echo "net.ipv4.neigh.default.gc_thresh3 = 12288"
 		echo "net.ipv4.netfilter.ip_conntrack_max=1572864"
+		
 		echo "net.netfilter.nf_conntrack_max = 1572864"
-		echo "net.netfilter.nf_conntrack_generic_timeout = 300"
-		echo "net.netfilter.nf_conntrack_tcp_timeout_syn_sent = 60"
-		echo "net.netfilter.nf_conntrack_tcp_timeout_syn_recv = 60"
+		echo "net.netfilter.nf_conntrack_generic_timeout = 60"
+		echo "net.netfilter.nf_conntrack_tcp_timeout_syn_sent = 15"
+		echo "net.netfilter.nf_conntrack_tcp_timeout_syn_recv = 30"
 		echo "net.netfilter.nf_conntrack_tcp_timeout_established = 600"
-		echo "net.netfilter.nf_conntrack_tcp_timeout_fin_wait = 60"
-		echo "net.netfilter.nf_conntrack_tcp_timeout_close_wait = 45"
+		echo "net.netfilter.nf_conntrack_tcp_timeout_fin_wait = 30"
+		echo "net.netfilter.nf_conntrack_tcp_timeout_close_wait = 20"
 		echo "net.netfilter.nf_conntrack_tcp_timeout_last_ack = 30"
-		echo "net.netfilter.nf_conntrack_tcp_timeout_time_wait = 120"
+		echo "net.netfilter.nf_conntrack_tcp_timeout_time_wait = 30"
 		echo "net.netfilter.nf_conntrack_tcp_timeout_close = 10"
 		echo "net.netfilter.nf_conntrack_tcp_timeout_max_retrans = 300"
 		echo "net.netfilter.nf_conntrack_tcp_timeout_unacknowledged = 300"
 		echo "net.netfilter.nf_conntrack_udp_timeout = 30"
-		echo "net.netfilter.nf_conntrack_udp_timeout_stream = 60"
+		echo "net.netfilter.nf_conntrack_udp_timeout_stream = 180"
 		echo "#net.netfilter.nf_conntrack_icmpv6_timeout = 30"
-		echo "net.netfilter.nf_conntrack_icmp_timeout = 30"
+		echo "net.netfilter.nf_conntrack_icmp_timeout = 10"
 		echo "net.netfilter.nf_conntrack_events_retry_timeout = 15"
 		echo "net.netfilter.nf_conntrack_checksum=0"
 		echo "net.ipv4.netfilter.ip_conntrack_checksum=0"
@@ -338,12 +339,13 @@
 		echo '#!/bin/sh -e'
 		echo
 		echo 'sleep 10'
-		echo '/system/scripts/irq_affinity.sh -X 0-7 eno1 || exit 0'
-		echo '/system/scripts/irq_affinity.sh -X -X 8-15 eno2 || exit 0'
-		echo '/system/scripts/ethtool.sh || exit 0'
+		echo '#/system/scripts/irq_affinity.sh -X 0-7 eno1 &'
+		echo '#/system/scripts/irq_affinity.sh -X -X 8-15 eno2 &'
+		echo '#/system/scripts/ethtool.sh eno1 &'
+		echo '#/system/scripts/ethtool.sh eno2 &'
 		echo
-		echo '/sbin/net-snmp-ignore-if || exit 0'
-		echo '/system/firewall/firewall.sh || exit 0'
+		echo '/sbin/net-snmp-ignore-if &'
+		echo '/system/firewall/firewall.sh &'
 		echo
 		echo 'exit 0'
 	) > /etc/rc.local
