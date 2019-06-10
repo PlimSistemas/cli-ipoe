@@ -229,7 +229,7 @@
 	
 
     # Backup automatico Google Drive
-	mv /usr/loca/src/cli-ipoe/others/backup_to_gdrive.sh /etc/cron.daily/
+	mv /usr/local/src/cli-ipoe/others/backup_to_gdrive.sh /etc/cron.daily/
    chmod +x /etc/cron.daily/backup_to_gdrive.sh
 	
 	
@@ -242,7 +242,7 @@
 	
 #Google Drive Client
 #------------------------------------------------
-	cp /usr/loca/src/cli-ipoe/others/gdrive-linux-x64 /usr/local/bin/gdrive
+	cp /usr/local/src/cli-ipoe/others/gdrive-linux-x64 /usr/local/bin/gdrive
 	chmod +x /usr/local/bin/gdrive
 
 #Instalar klish
@@ -323,7 +323,7 @@
 		echo '#/system/scripts/ethtool.sh eno2 &'
 		echo
 		echo '/sbin/net-snmp-ignore-if &'
-		echo '/system/firewall/firewall.sh &'
+		echo 'sleep 60;/system/firewall/firewall.sh &'
 		echo
 		echo 'exit 0'
 	) > /etc/rc.local

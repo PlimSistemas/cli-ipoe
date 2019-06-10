@@ -26,8 +26,9 @@
 	<!-- SHOW -->
 		<COMMAND name="show" 				help="Visualizar configuracoes">		<ACTION>/system/clish/bin/config_get.sh show		</ACTION></COMMAND>
 		<COMMAND name="show system" 		help="Configuracoes do sistema">		<ACTION>/system/clish/bin/config_get.sh show system	</ACTION></COMMAND>
+		<COMMAND name="show system backup" 	help="Configuracoes de backup">			<ACTION>/system/clish/bin/backup.sh show			</ACTION></COMMAND>
 		<COMMAND name="show system login"	help="Configuracoes de usuarios">		<ACTION>/system/clish/bin/users.sh list				</ACTION></COMMAND>
-		
+	
 		<COMMAND name="show system firewall" 						help="Configuracoes de firewall"/>
 		<COMMAND name="show system firewall status"					help="Verifcar status do firewall">												<ACTION>/system/clish/bin/firewall.sh status				</ACTION></COMMAND>
 		<COMMAND name="show system firewall group" 					help="Grupos de ips, redes ou portas">											<ACTION>/system/clish/bin/config_get.sh show firewal group	</ACTION></COMMAND>
@@ -41,8 +42,11 @@
 
 
 	<!-- DELETE -->
-		<COMMAND name="delete"				help="Deletar configuracao"/>
-		<COMMAND name="delete system"		help="Deletar configuracao do sistema"/>	
+		<COMMAND name="delete"							help="Deletar configuracao"/>
+		<COMMAND name="delete system"					help="Deletar configuracao do sistema"/>	
+		<COMMAND name="delete system backup"			help="Deletar configuracao de backup"/>	
+		<COMMAND name="delete system backup folder" 	help=""><ACTION> /system/clish/bin/backup.sh del</ACTION></COMMAND>
+
 		<COMMAND name="delete system login"	help="Deletar usuario do sistema"/>
 
 		<COMMAND name="delete system login user" 						help="Username">	<PARAM name="user" help="Username" ptype="STRING" optional="false"/><ACTION> /system/clish/bin/users.sh del ${user}</ACTION></COMMAND>
@@ -64,6 +68,10 @@
 	<!-- SET -->	
 		<COMMAND name="set" help="Definir parametros"/>
 
+
+		<COMMAND name="set system backup enable"					help="Ativar ou desativar Backup automatico">									<PARAM name="status" help="" ptype="BOOL" optional="false"/><ACTION>/system/clish/bin/backup.sh enable ${status}</ACTION></COMMAND>
+		<COMMAND name="set system backup folder"					help="Pasta do Google Driver">													<PARAM name="folder" help="" ptype="STRING" optional="false"/><ACTION>/system/clish/bin/backup.sh set ${folder}</ACTION></COMMAND>
+		<COMMAND name="set system backup auth"						help="Obter autorizacao para utilizar o Google Drive">				<ACTION>/system/clish/bin/backup.sh auth</ACTION></COMMAND>
 		<COMMAND name="set system firewall" 						help="Configuracoes de Firewall"/>
 		<COMMAND name="set system firewall enable"					help="Ativar ou desativar o firewall">											<PARAM name="status" help="" ptype="BOOL" optional="false"/><ACTION>/system/clish/bin/firewall.sh enable ${status}</ACTION></COMMAND>
 		<COMMAND name="set system firewall group" 					help="Grupos de IPs, Redes ou Portas"/>			
@@ -77,6 +85,7 @@
 
 
 		<COMMAND name="set system" 			help="Configuracoes do sistema"/>	
+		<COMMAND name="set system backup"	help="Backup das configuracoes"></COMMAND>
 		<COMMAND name="set system login" 	help="Adicionar/Editar usuarios e senhas do sistema"/>
 		<COMMAND name="set system hostname" help="Definir o nome do sistema"> <PARAM name="hostname" help="Nome do sistema" ptype="STRING"/>	<ACTION>sudo /system/clish/bin/hostname.sh ${hostname}</ACTION></COMMAND>
 
