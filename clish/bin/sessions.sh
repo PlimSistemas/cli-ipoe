@@ -2,13 +2,14 @@
 
 # FIELDS
 #------------------------------------------------
-	fields="ifname,username,calling-sid,ip,tx-bytes,rx-bytes,rate-limit,state,uptime"
+	fields="called-sid,ifname,username,calling-sid,ip,tx-bytes,rx-bytes,rate-limit,state,uptime"
 
 
 # SHOW
 #------------------------------------------------
-	if [ "$1" == "show" ]; then
+	if [ "$1" == "show" ] && [ "$2" == "" ]; then
 		accel-cmd show sessions "$fields"
+		exit
 	fi
 
 
@@ -26,26 +27,86 @@
 		accel-cmd show stat | grep -A 3 "ipoe:" | sed -e "1d"
 	fi
 
-# MATCH IP
+
+# MATCH
 #------------------------------------------------
-	if [ "$1" == "ip" ]; then
-		accel-cmd show sessions "$fields" match ip "$2"
+	if [ "$1" == "show" ]; then	
+
+		LIST="$(accel-cmd show sessions $fields)"
+		HEAD="$(echo "$LIST" | grep -A 1 ifname)"
+		
+		FIST="${3:0:1}"
+		LAST="${3: -1}"
+		
+		VALUE="$3"
+
+		#exato ex: 127.0.0.1 
+		if [ "$FIST" != "*" ] && [ "$LAST" != "*" ]; then
+			SEARCH="^$VALUE$"
+		fi
+
+
+		#parcial ex: *.80.44.* 
+		if [ "$FIST" == "*" ] && [ "$LAST" == "*" ]; then
+			VALUE=${VALUE#?}
+			VALUE=${VALUE%?}
+			SEARCH="$VALUE"
+		fi
+		
+		#inicia ex: 127.0.0.*
+		if [ "$FIST" != "*" ] && [ "$LAST" == "*" ]; then
+			VALUE=${VALUE%?}
+			SEARCH="^$VALUE"
+		fi
+		
+		#termina ex: *.0.0.1
+		if [ "$FIST" == "*" ] && [ "$LAST" != "*" ]; then
+			VALUE=${VALUE#?}
+			SEARCH="$VALUE$"
+		fi	
+
+
+		IFS='
+		'
+		
+		if [ "$2" == "vlan" ]; then
+			LINES="$(echo "$LIST" | awk '{print $1}' | grep -n $SEARCH | cut -f1 -d ":")"
+		fi
+
+		if [ "$2" == "interface" ]; then
+			LINES="$(echo "$LIST" | awk '{print $3}' | grep -n $SEARCH | cut -f1 -d ":")"
+		fi
+
+		if [ "$2" == "username" ]; then
+			LINES="$(echo "$LIST" | awk '{print $5}' | grep -n $SEARCH | cut -f1 -d ":")"
+		fi
+
+		if [ "$2" == "ip" ]; then
+			LINES="$(echo "$LIST" | awk '{print $9}' | grep -n $SEARCH | cut -f1 -d ":")"
+		fi
+		
+		if [ "$2" == "ip6" ]; then
+			LINES="$(echo "$LIST" | awk '{print $11}' | grep -n $SEARCH | cut -f1 -d ":")"
+		fi
+	
 	fi
+	
+	
+	
 
-
-# MATCH USERNAME
+# MATCH
 #------------------------------------------------
-	if [ "$1" == "username" ]; then	
-		accel-cmd show sessions "$fields" match username "$2"
-	fi
-
-
-# MATCH VLAN
-#------------------------------------------------
-	if [ "$1" == "vlan" ]; then
-		accel-cmd show sessions "$fields" match called-sid "$2"
-	fi
-
+		
+	for LINE in $LINES
+	do
+		LINHAS+="; $LINE"
+		LINHAS+="p"
+	done
+	
+	#echo "$LINES"
+	
+	echo "$HEAD"
+	echo "$LIST" | sed -n "$LINHAS" | grep --color=always "$VALUE"
 
 
 # BANDWIDTH

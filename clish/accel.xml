@@ -50,9 +50,9 @@
 	</COMMAND>	
 
 	<COMMAND name="show sessions ip"	help="Find active session user by IP Address">
-		<PARAM name="ip"	help="subscriber ip address"	ptype="IP_ADDR"/>
+		<PARAM name="ip"	help="subscriber ip address"	ptype="STRING"/>
 		<ACTION>
-			/system/clish/bin/sessions.sh ip ${ip}
+			/system/clish/bin/sessions.sh show ip ${ip}
 		</ACTION>
 	</COMMAND>
  
@@ -110,7 +110,7 @@
 		
 			<!-- USERNAME  -->
 			if test -z "${acao}"; then
-				/system/clish/bin/sessions.sh show
+				/system/clish/bin/sessions.sh show username ${username}
 			fi
 			
 			<!-- BANDWIDTH -->
@@ -140,9 +140,9 @@
 	</COMMAND>				
 
 	<COMMAND name="show sessions vlan" help="Find active session user by VLAN">
-		<PARAM name="vlan" help="" ptype="VLAN_ID"/>				
+		<PARAM name="vlan" help="" ptype="STRING"/>				
 		<ACTION>
-			/system/clish/bin/sessions.sh vlan ${vlan}
+			/system/clish/bin/sessions.sh show vlan ${vlan}
 		</ACTION>
 	</COMMAND>
 
