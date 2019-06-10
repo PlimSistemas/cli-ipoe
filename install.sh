@@ -229,30 +229,8 @@
 	
 
     # Backup automatico Google Drive
-    (
-		echo "#!/bin/bash"
-		echo
-		echo "mkdir -p /backup"
-		echo "TIME=`date +%Y%m%d-%H%M%S`"
-		echo "FILENAME=backup-accel-ppp-$TIME.tar"
-		echo
-		echo "tar -cf /backup/$FILENAME /etc/network/interfaces"
-		echo "tar -rf /backup/$FILENAME /system/firewall/ipset.conf"
-		echo "tar -rf /backup/$FILENAME /system/firewall/iptables.conf"
-		echo "tar -rf /backup/$FILENAME /system/configs/accel/accel-ppp.conf"
-		echo "tar -rf /backup/$FILENAME /system/configs/accel/accel-ppp.lua"
-		echo "tar -rf /backup/$FILENAME /system//configs/accel/chap-secrets"
-		echo "tar -rf /backup/$FILENAME /system/configs/snmp/snmpd.conf"
-		echo "tar -rf /backup/$FILENAME /system/configs/frr/frr.conf"
-		echo "tar -rf /backup/$FILENAME ~/.gdrive"
-		echo
-		echo "#para obter a pasta use o comando: gdrive list --absolute --name-width 100 -m 100"
-		echo "gdrive upload -p 1EU5I2lvkydowqMSnseCmYXA9Cv8mslnN /backup/$FILENAME"
-		echo
-		echo "exit 0"
-		echo
-	) > /etc/cron.daily/backup_to_gdrive.sh
-    chmod +x /etc/cron.daily/backup_to_gdrive.sh
+	mv /usr/loca/src/cli-ipoe/others/backup_to_gdrive.sh /etc/cron.daily/
+   chmod +x /etc/cron.daily/backup_to_gdrive.sh
 	
 	
 
