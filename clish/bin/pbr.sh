@@ -147,7 +147,7 @@ add_rules () {
 		src=$(sql_exec "select value1 from configs where path = \"ip route pbr $1 src\";")
 		
 		if [ -z "$hop" ] || [ -z "$src" ]; then
-			echo "src-address ou next-hop não configurado"
+			echo "PBR não ativado!  src-address ou next-hop não configurado"
 			exit 0
 		fi
 	

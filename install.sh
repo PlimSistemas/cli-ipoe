@@ -271,6 +271,8 @@
 	mv /usr/local/src/cli-ipoe/clish/ /system
 	mv /usr/local/src/cli-ipoe/db/ /system
 	
+	mv /usr/local/src/cli-ipoe/firewall/ /system
+	chmod +x /system/firewall/nftables.sh
 	
 	mv /usr/local/src/cli-ipoe/firewall/ /system
 	chmod +x /system/firewall/firewall.sh
@@ -329,6 +331,7 @@
 		echo '/system/scripts/ethtool.sh eno1'
 		echo '/system/scripts/ethtool.sh eno2'
 		echo
+		echo '/system/clish/bin/pbr.sh 1 reload'
 		echo '/system/firewall/firewall.sh'
 		echo
 		echo '/sbin/net-snmp-ignore-if &'
