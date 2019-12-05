@@ -3,17 +3,16 @@
 #Atualizando Pacotes
 #------------------------------------------------
 	apt update
+	apt remove -y --purge iptables
 	apt install -y --no-install-recommends sudo net-tools curl nmap tcpdump htop atop mtr vlan ethtool apt-transport-https ca-certificates gnupg gnupg2 gnupg1 ruby mc bmon vlan ifenslave-2.6
 	apt install -y --no-install-recommends psmisc git git-core make cmake zlib1g-dev liblua5.1-dev libpcre3-dev build-essential libssl-dev libsnmp-dev linux-headers-`uname -r`
-	apt install -y --no-install-recommends dh-autoreconf libexpat1-dev telnet ntpdate ipset unzip sqlite3 libsqlite3-dev facter libperl-dev iptraf conntrack linux-perf
-
+	apt install -y --no-install-recommends dh-autoreconf libexpat1-dev telnet ntpdate ipset unzip sqlite3 libsqlite3-dev facter libperl-dev iptraf conntrack linux-perf nftables
 
 #Preparação
 #------------------------------------------------
 	mkdir -p /system
 	cd /usr/local/src
 	git clone https://github.com/PlimSistemas/cli-ipoe.git cli-ipoe
-	
 	
 
 #Instalando o FRR
@@ -26,6 +25,7 @@
 	
 	sed -i 's/ospfd=no/ospfd=yes/g' /etc/frr/daemons
 	sed -i 's/ospf6d=no/ospf6d=yes/g' /etc/frr/daemons
+	sed -i 's/bgpd=no/bgpd=yes/g' /etc/frr/daemons
 	
 	mkdir -p /system/configs/frr
 	mv /etc/frr/frr.conf /system/configs/frr/
@@ -154,7 +154,10 @@
 	echo "options nf_conntrack hashsize=1193572" > /etc/modprobe.d/nf_conntrack.conf
 
 	echo "100     accel/ipoe"  >> /etc/iproute2/rt_protos
-	echo "100     accel/ipoe"  >> /etc/iproute2/rt_tables	
+	echo "101     PBR_1"  >> /etc/iproute2/rt_tables	
+	echo "102     PBR_2"  >> /etc/iproute2/rt_tables	
+	echo "103     PBR_3"  >> /etc/iproute2/rt_tables	
+	echo "104     PBR_4"  >> /etc/iproute2/rt_tables	
 
 	sysctl -p
 
@@ -217,6 +220,8 @@
     # Limpar cache de fs para deixar ram sempre disponivel para apps
     (
 		echo '#!/bin/sh'
+		echo
+		echo "exit 0" 
 		echo
 		echo 'for i in 1 2 3; do'
 		echo '    echo $i > /proc/sys/vm/drop_caches'
@@ -316,14 +321,17 @@
 	(
 		echo '#!/bin/sh -e'
 		echo
-		echo 'sleep 10'
-		echo '#/system/scripts/irq_affinity.sh -X 0-7 eno1 &'
-		echo '#/system/scripts/irq_affinity.sh -X -X 8-15 eno2 &'
-		echo '#/system/scripts/ethtool.sh eno1 &'
-		echo '#/system/scripts/ethtool.sh eno2 &'
+		echo 'sleep 5'
+		echo "ifconfig eno1 up"
+		echo "ifconfig eno2 up"
+		echo '/system/scripts/irq_affinity.sh -X 0-7 eno1'
+		echo '/system/scripts/irq_affinity.sh -X 8-15 eno2'
+		echo '/system/scripts/ethtool.sh eno1'
+		echo '/system/scripts/ethtool.sh eno2'
+		echo
+		echo '/system/firewall/firewall.sh'
 		echo
 		echo '/sbin/net-snmp-ignore-if &'
-		echo 'sleep 60;/system/firewall/firewall.sh &'
 		echo
 		echo 'exit 0'
 	) > /etc/rc.local

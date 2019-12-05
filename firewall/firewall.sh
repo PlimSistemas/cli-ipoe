@@ -5,165 +5,94 @@
 	. /system/clish/bin/functions.sh
 
 
-# VARIAVEIS
-#------------------------------------------------
-	file_ipset="/system/firewall/ipset.conf"
-
 #Limpa Firewall
 #------------------------------------------------
-	iptables -F -t filter
-	iptables -F -t nat
-	iptables -F -t mangle
-	iptables -F -t raw
-	
-	iptables -X -t filter
-	iptables -X -t nat
-	iptables -X -t mangle
-	iptables -X -t raw
-	
-# Limpa IPSET
-#------------------------------------------------
+	nft flush ruleset
 
-	ip rule del pref 2 fwmark 0x80000001 table 2
 
-	ipset destroy
-	echo "" > "$file_ipset"
-	
-	
-	
-	
 # VERIFICA FIREWALL DESATIVADO
 #------------------------------------------------
 	enable=$(sql_exec "select value1 from configs where path = 'system firewall enable';")
 	if [ "$enable" != "1" ]; then
-		exit 0		
+		echo "Configuração de Firewall está desativada!"
+		exit 0
 	fi
-	
 
 
 
-	
-	
-# LIST PBR
+
+
+# CRIA LISTA DE IPS e PORTAS
 #------------------------------------------------
-	list=$(sql_exec "select value1 from configs where path = 'system firewall group pbr';" | tr '\n' ' ')
-	read -a ips <<< "$list"
-	
-	echo -e "\ncreate pbr hash:net family inet" >> $file_ipset
-	
-	for aux in "${ips[@]}";
-	do
-		echo "add pbr $aux" >> $file_ipset
-	done
-	
+
+	list_ssh=$(sql_exec "select value1 from configs where path = 'system firewall group acl-ssh';" | tr '\n' ' ')
+	list_snmp=$(sql_exec "select value1 from configs where path = 'system firewall group acl-snmp';" | tr '\n' ' ')
+	list_static_ips=$(sql_exec "select value1 from configs where path = 'system firewall group static-ip';" | tr '\n' ' ')
+	list_cpe_ports=$(sql_exec "select value1 from configs where path = 'system firewall group cpe-ports';" | tr '\n' ' ')
+	list_cpe_management=$(sql_exec "select value1 from configs where path = 'system firewall group cpe-management';" | tr '\n' ' ')
+	list_bgp=$(sql_exec "select value1 from configs where path = 'system firewall group acl-bgp';" | tr '\n' ' ')
+	list_radius_coa=$(sql_exec "select value1 from configs where path = 'system firewall group static-ip';" | tr '\n' ' ')
+
+	read -a ar_ssh             <<< "$list_ssh"
+	read -a ar_snmp            <<< "$list_snmp"
+	read -a ar_static          <<< "$list_static_ips"
+	read -a ar_cpe_ports       <<< "$list_cpe_ports"
+	read -a ar_cpe_management  <<< "$list_cpe_management"
+	read -a ar_bgp             <<< "$list_bgp"
+	read -a ar_radius_coa      <<< "$list_radius_coa"
 
 
-
-# LIST CPE MANAGEMENT
-#------------------------------------------------
-	list=$(sql_exec "select value1 from configs where path = 'system firewall group cpe-management';" | tr '\n' ' ')
-	read -a ips <<< "$list"
-	
-	echo -e "\ncreate cpe-management hash:net family inet" >> $file_ipset
-	
-	for aux in "${ips[@]}";
-	do
-		echo "add cpe-management $aux" >> $file_ipset
-	done
-	
-	
-	
-# LIST CPE PORTS
-#------------------------------------------------
-	list=$(sql_exec "select value1 from configs where path = 'system firewall group cpe-ports';" | tr '\n' ' ')
-	read -a ips <<< "$list"
-	
-	echo -e "\ncreate cpe-ports bitmap:port range 1-65535" >> $file_ipset
-	
-	for aux in "${ips[@]}";
-	do
-		echo "add cpe-ports $aux" >> $file_ipset
+	for i in "${!ar_ssh[@]}"; do #ACL-SSH
+		[ $i == 0 ] && nft_ssh="${ar_ssh[i]}" || nft_ssh="${nft_ssh}, ${ar_ssh[i]}"
 	done
 
-
-
-
-# LIST STATIC-IP
-#------------------------------------------------
-	list=$(sql_exec "select value1 from configs where path = 'system firewall group static-ip';" | tr '\n' ' ')
-	read -a ips <<< "$list"
-
-	
-	echo -e "\ncreate static-ip hash:net family inet" >> $file_ipset
-	
-	for aux in "${ips[@]}";
-	do
-		echo "add static-ip $aux" >> $file_ipset
+	for i in "${!ar_snmp[@]}"; do #ACL-SNMP
+		[ $i == 0 ] && nft_snmp="${ar_snmp[i]}" || nft_snmp="${nft_snmp}, ${ar_snmp[i]}"
 	done
-	
-	
-# LIST ACL SSH
-#------------------------------------------------
-	list=$(sql_exec "select value1 from configs where path = 'system firewall group acl-ssh';" | tr '\n' ' ')
-	read -a ips <<< "$list"
 
-	
-	echo -e "\ncreate acl-ssh hash:net family inet" >> $file_ipset
-	
-	for aux in "${ips[@]}";
-	do
-		echo "add acl-ssh $aux" >> $file_ipset
-	done	
+	for i in "${!ar_cpe_ports[@]}"; do #CPE-PORTS
+		[ $i == 0 ] && nft_cpe_ports="${ar_cpe_ports[i]}" || nft_cpe_ports="${nft_cpe_ports}, ${ar_cpe_ports[i]}"
+	done
 
+	for i in "${!ar_cpe_management[@]}"; do #CPE-MANAGEMENT
+		[ $i == 0 ] && nft_cpe_management="${ar_cpe_management[i]}" || nft_cpe_management="${nft_cpe_management}, ${ar_cpe_management[i]}"
+	done
 
+	for i in "${!ar_static[@]}"; do #CPE-MANAGEMENT
+		[ $i == 0 ] && nft_static="${ar_static[i]}" || nft_static="${nft_static}, ${ar_static[i]}"
+	done
 
-# LIST ACL SSH
-#------------------------------------------------
-	list=$(sql_exec "select value1 from configs where path = 'system firewall group acl-snmp';" | tr '\n' ' ')
-	read -a ips <<< "$list"
+	for i in "${!ar_bgp[@]}"; do #ACL-BGP
+		[ $i == 0 ] && nft_bgp="${ar_bgp[i]}" || nft_bgp="${nft_bgp}, ${ar_bgp[i]}"
+	done
 
-	
-	echo -e "\ncreate acl-snmp hash:net family inet" >> $file_ipset
-	
-	for aux in "${ips[@]}";
-	do
-		echo "add acl-snmp $aux" >> $file_ipset
-	done	
+	for i in "${!ar_radius_coa[@]}"; do #ACL-RADIUS-COA
+		[ $i == 0 ] && nft_radius_coa="${ar_radius_coa[i]}" || nft_radius_coa="${nft_radius_coa}, ${ar_radius_coa[i]}"
+	done
 
 
+	[ -z "$list_ssh" ]            && nft_ssh="0.0.0.0/0"                  || nft_ssh="$nft_ssh"
+	[ -z "$list_snmp" ]           && nft_snmp="255.255.255.255/32"        || nft_snmp="$nft_snmp"
+	[ -z "$list_cpe_ports" ]      && nft_cpe_ports="0"                    || nft_cpe_ports="$nft_cpe_ports"
+	[ -z "$list_static_ips" ]     && nft_static="255.255.255.255/32"      || nft_static="$nft_static"
+	[ -z "$list_cpe_management" ] && nft_cpe_management="0.0.0.0/0"       || nft_cpe_management="$nft_cpe_management"
+	[ -z "$list_bgp" ]            && nft_bgp="255.255.255.255/32"         || nft_bgp="$nft_bgp"
+	[ -z "$list_radius_coa" ]     && nft_radius_coa="255.255.255.255/32"  || nft_radius_coa="$nft_radius_coa"
+	
+	nft_ssh=${nft_ssh//\//\\/}
+	nft_snmp=${nft_snmp//\//\\/}
+	nft_cpe_ports=${nft_cpe_ports//\//\\/}
+	nft_static=${nft_static//\//\\/}
+	nft_cpe_management=${nft_cpe_management//\//\\/}
+	nft_bgp=${nft_bgp//\//\\/}
+	nft_radius_coa=${nft_radius_coa//\//\\/}
 
-
-#Carrega Firewall
-#------------------------------------------------
-	ip rule add pref 2 fwmark 0x80000001 table 2
-
-	ipset restore < /system/firewall/ipset.conf	
-
-	#Delete interfaces ACL
-	sed -i '/^-A FW_LOCAL_HOOK -i/d' /system/firewall/iptables.conf
+	sed -i "/define ACL_SSH/s/.*/define ACL_SSH = { $nft_ssh }/"                                      /system/firewall/nftables.conf
+	sed -i "/define ACL_SNMP/s/.*/define ACL_SNMP = { $nft_snmp }/"                                   /system/firewall/nftables.conf
+	sed -i "/define CPE_BLOCK_PORTS/s/.*/define CPE_BLOCK_PORTS = { $nft_cpe_ports }/"                /system/firewall/nftables.conf
+	sed -i "/define IPS_PORT_WHITE_LIST/s/.*/define IPS_PORT_WHITE_LIST = { $nft_static }/"           /system/firewall/nftables.conf
+	sed -i "/define CPE_BLOCK_MANAGEMENT/s/.*/define CPE_BLOCK_MANAGEMENT = { $nft_cpe_management }/" /system/firewall/nftables.conf
+	sed -i "/define ACL_BGP/s/.*/define ACL_BGP = { $nft_bgp }/"                                      /system/firewall/nftables.conf
+	sed -i "/define ACL_RADIUS_COA/s/.*/define ACL_RADIUS_COA = { $nft_radius_coa }/"                 /system/firewall/nftables.conf
 	
-	#Delete PBR
-	sed -i '/^-A CGNAT -m comment --comment/d' /system/firewall/iptables.conf
-
-	
-	#Adiciona Interface ACL
-	list=$(sql_exec "select value1 from configs where path = 'system firewall group acl-interface';" | tr '\n' ' ')
-	read -a ifname <<< "$list"
-	
-	for aux in "${ifname[@]}";
-	do
-		sed -i "/^#PROTECT-BEGIN/a -A FW_LOCAL_HOOK -i $aux -j    RE-PROTECT" /system/firewall/iptables.conf
-	done	
-	
-
-	#Adiciona PBR
-	list=$(sql_exec "select value1 from configs where path = 'system firewall group pbr';" | tr '\n' ' ')
-	read -a redes <<< "$list"
-	
-	for aux in "${redes[@]}";
-	do
-		sed -i "/^#PBR-BEGIN/a -A CGNAT -m comment --comment \"CGNAT\" --source $aux --destination 0.0.0.0/0 -j PBR_2" /system/firewall/iptables.conf
-	done	
-	
-	
-	iptables-restore < /system/firewall/iptables.conf
+	/system/firewall/nftables.conf

@@ -18,7 +18,7 @@
 
 	<COMMAND name="frr" help="IP routing protocol suite for Linux and Unix platforms which includes protocol daemons for BGP, IS-IS, LDP, OSPF, PIM, and RIP.">
 		<ACTION>
-			sudo vtysh		
+			su -l -c "vtysh"
 		</ACTION>
 	</COMMAND>
 	

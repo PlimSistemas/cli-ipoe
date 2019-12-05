@@ -25,6 +25,15 @@
 
 	<!-- SHOW -->
 		<COMMAND name="show" 				help="Visualizar configuracoes">		<ACTION>/system/clish/bin/config_get.sh show		</ACTION></COMMAND>
+
+		<COMMAND name="show ip" 			 			help="Visualizar configuracoes IP"/>	
+		<COMMAND name="show ip route" 	 				help="Visualizar configuracoes de rotas"/>	
+		<COMMAND name="show ip route pbr" 				help="Visualizar endereço ip do next-hop do PBR">		<ACTION>/system/clish/bin/pbr.sh 1 show pbr	</ACTION></COMMAND>
+		<COMMAND name="show ip route pbr next-hop" 		help="Visualizar endereço ip do next-hop do PBR">		<ACTION>/system/clish/bin/pbr.sh 1 show hop	</ACTION></COMMAND>
+		<COMMAND name="show ip route pbr src-address" 	help="Visualizar IP/Redes que participam do PBR">		<ACTION>/system/clish/bin/pbr.sh 1 show src	</ACTION></COMMAND> 
+
+
+
 		<COMMAND name="show system" 		help="Configuracoes do sistema">		<ACTION>/system/clish/bin/config_get.sh show system	</ACTION></COMMAND>
 		<COMMAND name="show system backup" 	help="Configuracoes de backup">			<ACTION>/system/clish/bin/backup.sh show			</ACTION></COMMAND>
 		<COMMAND name="show system login"	help="Configuracoes de usuarios">		<ACTION>/system/clish/bin/users.sh list				</ACTION></COMMAND>
@@ -32,17 +41,26 @@
 		<COMMAND name="show system firewall" 						help="Configuracoes de firewall"/>
 		<COMMAND name="show system firewall status"					help="Verifcar status do firewall">												<ACTION>/system/clish/bin/firewall.sh status				</ACTION></COMMAND>
 		<COMMAND name="show system firewall group" 					help="Grupos de ips, redes ou portas">											<ACTION>/system/clish/bin/config_get.sh show firewal group	</ACTION></COMMAND>
-		<COMMAND name="show system firewall group pbr"				help="Redes que irao participar do PBR">										<ACTION>/system/clish/bin/firewall.sh list pbr				</ACTION></COMMAND>
 		<COMMAND name="show system firewall group static-ip" 		help="Redes publicas sem bloqueio de portas">									<ACTION>/system/clish/bin/firewall.sh list static-ip		</ACTION></COMMAND>
 		<COMMAND name="show system firewall group cpe-management" 	help="Redes de gerencia que poderao acessar as portas dos IPs com bloqueio">	<ACTION>/system/clish/bin/firewall.sh list cpe-management	</ACTION></COMMAND>
 		<COMMAND name="show system firewall group cpe-ports" 		help="Portas que serao bloqueadas">												<ACTION>/system/clish/bin/firewall.sh list cpe-ports		</ACTION></COMMAND>
 		<COMMAND name="show system firewall group acl-ssh"			help="Redes que poderao acessar esse servidor por SSH">							<ACTION>/system/clish/bin/firewall.sh list acl-ssh			</ACTION></COMMAND>
 		<COMMAND name="show system firewall group acl-snmp" 		help="Redes que poderao fazer leitura SNMP desse servidor">						<ACTION>/system/clish/bin/firewall.sh list acl-snmp			</ACTION></COMMAND>
-		<COMMAND name="show system firewall group acl-interface"	help="Interfaces que participam do ACL">										<ACTION>/system/clish/bin/firewall.sh list acl-interface	</ACTION></COMMAND>
+		<COMMAND name="show system firewall group acl-bgp" 			help="Redes que poderao fechar sessão BGP com esse servidor">					<ACTION>/system/clish/bin/firewall.sh list acl-bgp			</ACTION></COMMAND>
+		<COMMAND name="show system firewall group acl-radius-coa"	help="Redes que poderao comunicar com RADIUS COA desse servidor">				<ACTION>/system/clish/bin/firewall.sh list acl-radius-coa	</ACTION></COMMAND>
 
 
 	<!-- DELETE -->
-		<COMMAND name="delete"							help="Deletar configuracao"/>
+		<COMMAND name="delete"											help="Deletar configuracao"/>
+
+		<COMMAND name="delete ip"							help="Deletar configurações IP"/>	
+		<COMMAND name="delete ip route"						help="Deletar configuracões de Rota"/>	
+		<COMMAND name="delete ip route pbr" 				help="Deletar configuração de PBR">		 																							<ACTION>/system/clish/bin/pbr.sh 1 del pbr</ACTION></COMMAND>
+		<COMMAND name="delete ip route pbr next-hop" 		help="Deletar next-hop do PBR">																										<ACTION>/system/clish/bin/pbr.sh 1 del hop"			</ACTION></COMMAND>
+		<COMMAND name="delete ip route pbr src-address"		help="Deletar IP/Rede de origem do PBR">	<PARAM name="address" 	  help=""		ptype="IP_ADDR_MASK" 		 optional="true"/>	<ACTION>/system/clish/bin/pbr.sh 1 del src "${address}"			</ACTION></COMMAND>
+
+
+
 		<COMMAND name="delete system"					help="Deletar configuracao do sistema"/>	
 		<COMMAND name="delete system backup"			help="Deletar configuracao de backup"/>	
 		<COMMAND name="delete system backup folder" 	help=""><ACTION> /system/clish/bin/backup.sh del</ACTION></COMMAND>
@@ -54,37 +72,46 @@
 		<COMMAND name="delete system firewall" 							help="Deletar configuracoes de firewall">																																<ACTION>/system/clish/bin/config_del.sh firewal							</ACTION></COMMAND>
 		<COMMAND name="delete system firewall dislabe"					help="Ativar firewall">																	<ACTION>/system/clish/bin/firewall.sh enable									</ACTION></COMMAND>
 		<COMMAND name="delete system firewall group" 					help="Deletar grupos de ips, redes ou portas">																															<ACTION>/system/clish/bin/config_del.sh firewal group					</ACTION></COMMAND>
-		<COMMAND name="delete system firewall group pbr"				help="Deletar redes que irao participar do PBR">										<PARAM name="address" help="IP ou Rede" ptype="IP_ADDR_MASK" optional="true"/>	<ACTION>/system/clish/bin/firewall.sh del pbr "${address}"				</ACTION></COMMAND>
 		<COMMAND name="delete system firewall group static-ip" 			help="Deletar redes publicas sem bloqueio de portas">									<PARAM name="address" help="IP ou Rede" ptype="IP_ADDR_MASK" optional="true"/>	<ACTION>/system/clish/bin/firewall.sh del static-ip "${address}"		</ACTION></COMMAND>
 		<COMMAND name="delete system firewall group cpe-management" 	help="Deletar redes de gerencia que poderao acessar as portas dos IPs com bloqueio">	<PARAM name="address" help="IP ou Rede" ptype="IP_ADDR_MASK" optional="true"/>	<ACTION>/system/clish/bin/firewall.sh del cpe-management "${address}"	</ACTION></COMMAND>
 		<COMMAND name="delete system firewall group cpe-ports" 			help="Deletar portas que serao bloqueadas">												<PARAM name="port" 	  help="Porta"		ptype="PORT" 		 optional="true"/>	<ACTION>/system/clish/bin/firewall.sh del cpe-ports "${port}"			</ACTION></COMMAND>
 		<COMMAND name="delete system firewall group acl-ssh"			help="Deletar redes que poderao acessar esse servidor por SSH">							<PARAM name="address" help="IP ou Rede" ptype="IP_ADDR_MASK" optional="true"/>	<ACTION>/system/clish/bin/firewall.sh del acl-ssh "${address}"			</ACTION></COMMAND>
 		<COMMAND name="delete system firewall group acl-snmp" 			help="Deletar redes que poderao fazer leitura SNMP desse servidor">						<PARAM name="address" help="IP ou Rede" ptype="IP_ADDR_MASK" optional="true"/>	<ACTION>/system/clish/bin/firewall.sh del acl-snmp "${address}"			</ACTION></COMMAND>
-		<COMMAND name="delete system firewall group acl-interface"		help="Deletar interface quer que participa do  ACL">									<PARAM name="ifname"  help="IP ou Rede" ptype="STRING" optional="true"/>		<ACTION>/system/clish/bin/firewall.sh del acl-interface "${ifname}"			</ACTION></COMMAND>
+		<COMMAND name="delete system firewall group acl-bgp" 			help="Deletar redes que poderao fechar sessão BGP com esse servidor">					<PARAM name="address" help="IP ou Rede" ptype="IP_ADDR_MASK" optional="true"/>	<ACTION>/system/clish/bin/firewall.sh del acl-bgp "${address}"			</ACTION></COMMAND>
+		<COMMAND name="delete system firewall group acl-radius-coa"		help="Deletar redes que poderao comunicar com RADIUS COA desse servidor">				<PARAM name="address" help="IP ou Rede" ptype="IP_ADDR_MASK" optional="true"/>	<ACTION>/system/clish/bin/firewall.sh del acl-radius-coa "${address}"	</ACTION></COMMAND>
 
 
 
 
 	<!-- SET -->	
 		<COMMAND name="set" help="Definir parametros"/>
-
+		
+		
+	
+		
+		<COMMAND name="set ip route pbr next-hop" 					help="IP do next-hop">															<PARAM name="address" help="IP do next-hop" ptype="IP_ADDR" optional="false"/><ACTION>/system/clish/bin/pbr.sh 1 set hop "${address}"		</ACTION></COMMAND>		
+		<COMMAND name="set ip route pbr src-address" 				help="IP / Redes que irão participar do PBR">									<PARAM name="address" help="IP / Redes que irão participar do PBR" ptype="IP_ADDR_MASK" optional="false"/><ACTION>/system/clish/bin/pbr.sh 1 set src "${address}" </ACTION></COMMAND>		
 
 		<COMMAND name="set system backup enable"					help="Ativar ou desativar Backup automatico">									<PARAM name="status" help="" ptype="BOOL" optional="false"/><ACTION>/system/clish/bin/backup.sh enable ${status}</ACTION></COMMAND>
 		<COMMAND name="set system backup folder"					help="Pasta do Google Driver">													<PARAM name="folder" help="" ptype="STRING" optional="false"/><ACTION>/system/clish/bin/backup.sh set ${folder}</ACTION></COMMAND>
-		<COMMAND name="set system backup auth"						help="Obter autorizacao para utilizar o Google Drive">				<ACTION>/system/clish/bin/backup.sh auth</ACTION></COMMAND>
+		<COMMAND name="set system backup auth"						help="Obter autorizacao para utilizar o Google Drive">							<ACTION>/system/clish/bin/backup.sh auth</ACTION></COMMAND>
 		<COMMAND name="set system firewall" 						help="Configuracoes de Firewall"/>
 		<COMMAND name="set system firewall enable"					help="Ativar ou desativar o firewall">											<PARAM name="status" help="" ptype="BOOL" optional="false"/><ACTION>/system/clish/bin/firewall.sh enable ${status}</ACTION></COMMAND>
 		<COMMAND name="set system firewall group" 					help="Grupos de IPs, Redes ou Portas"/>			
-		<COMMAND name="set system firewall group pbr"				help="Redes que irao participar do PBR">										<PARAM name="address" help="IP ou Rede" ptype="IP_ADDR_MASK" optional="false"/><ACTION>/system/clish/bin/firewall.sh add pbr "${address}"			</ACTION></COMMAND>
 		<COMMAND name="set system firewall group static-ip" 		help="Redes publicas sem bloqueio de portas">									<PARAM name="address" help="IP ou Rede" ptype="IP_ADDR_MASK" optional="false"/><ACTION>/system/clish/bin/firewall.sh add static-ip "${address}"		</ACTION></COMMAND>		
 		<COMMAND name="set system firewall group cpe-management" 	help="Redes de gerencia que poderao acessar as portas dos IPs com bloqueio">	<PARAM name="address" help="IP ou Rede" ptype="IP_ADDR_MASK" optional="false"/><ACTION>/system/clish/bin/firewall.sh add cpe-management "${address}"</ACTION></COMMAND>		
 		<COMMAND name="set system firewall group cpe-ports" 		help="Portas que serao bloqueadas">												<PARAM name="address" help="Porta" 		ptype="PORT" 		 optional="false"/><ACTION>/system/clish/bin/firewall.sh add cpe-ports "${address}"		</ACTION></COMMAND>
-		<COMMAND name="set system firewall group acl-ssh"			help="Redes que poderao acessar esse servidor por SSH">							<PARAM name="address" help="IP ou Rede" ptype="IP_ADDR_MASK" optional="false"/><ACTION>/system/clish/bin/firewall.sh add acl-ssh "${address}"		</ACTION></COMMAND>
-		<COMMAND name="set system firewall group acl-snmp" 			help="Redes que poderao fazer leitura SNMP desse servidor">						<PARAM name="address" help="IP ou Rede" ptype="IP_ADDR_MASK" optional="false"/><ACTION>/system/clish/bin/firewall.sh add acl-snmp "${address}"		</ACTION></COMMAND>	
-		<COMMAND name="set system firewall group acl-interface"		help="Interfaces que participam do ACL">										<PARAM name="ifname"  help="[eth0, bond0, ipoe+, pppoe+]" ptype="STRING" 	 optional="false"/><ACTION>/system/clish/bin/firewall.sh add acl-interface "${ifname}"		</ACTION></COMMAND>	
+		<COMMAND name="set system firewall group acl-ssh"			help="Redes autorizadas acessar o servidor SSH">								<PARAM name="address" help="IP ou Rede" ptype="IP_ADDR_MASK" optional="false"/><ACTION>/system/clish/bin/firewall.sh add acl-ssh "${address}"		</ACTION></COMMAND>
+		<COMMAND name="set system firewall group acl-snmp" 			help="Redes autorizadas fazer leitura SNMP desse servidor">						<PARAM name="address" help="IP ou Rede" ptype="IP_ADDR_MASK" optional="false"/><ACTION>/system/clish/bin/firewall.sh add acl-snmp "${address}"		</ACTION></COMMAND>	
+		<COMMAND name="set system firewall group acl-bgp" 			help="Redes autorizadas fechar BGP com esse servidor">							<PARAM name="address" help="IP ou Rede" ptype="IP_ADDR_MASK" optional="false"/><ACTION>/system/clish/bin/firewall.sh add acl-bgp "${address}"		</ACTION></COMMAND>	
+		<COMMAND name="set system firewall group acl-radius-coa"	help="Redes autorizadas comunicar com RADIUS COA desse servidor">				<PARAM name="address" help="IP ou Rede" ptype="IP_ADDR_MASK" optional="false"/><ACTION>/system/clish/bin/firewall.sh add acl-radius-coa "${address}"</ACTION></COMMAND>	
 
 
-		<COMMAND name="set system" 			help="Configuracoes do sistema"/>	
+		<COMMAND name="set system" 		 help="Configuracoes do sistema"/>	
+		<COMMAND name="set ip" 			 help="Configuracoes IP"/>	
+		<COMMAND name="set ip route" 	 help="Configuracoes de Rotas"/>	
+		<COMMAND name="set ip route pbr" help="Roteamento Baseado em Políticas"/>	
+		
 		<COMMAND name="set system backup"	help="Backup das configuracoes"></COMMAND>
 		<COMMAND name="set system login" 	help="Adicionar/Editar usuarios e senhas do sistema"/>
 		<COMMAND name="set system hostname" help="Definir o nome do sistema"> <PARAM name="hostname" help="Nome do sistema" ptype="STRING"/>	<ACTION>sudo /system/clish/bin/hostname.sh ${hostname}</ACTION></COMMAND>
