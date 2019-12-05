@@ -71,13 +71,13 @@
 	done
 
 
-	[ -z "$list_ssh" ]            && nft_ssh="0.0.0.0/0"                  || nft_ssh="$nft_ssh"
-	[ -z "$list_snmp" ]           && nft_snmp="255.255.255.255/32"        || nft_snmp="$nft_snmp"
-	[ -z "$list_cpe_ports" ]      && nft_cpe_ports="0"                    || nft_cpe_ports="$nft_cpe_ports"
-	[ -z "$list_static_ips" ]     && nft_static="255.255.255.255/32"      || nft_static="$nft_static"
-	[ -z "$list_cpe_management" ] && nft_cpe_management="0.0.0.0/0"       || nft_cpe_management="$nft_cpe_management"
-	[ -z "$list_bgp" ]            && nft_bgp="255.255.255.255/32"         || nft_bgp="$nft_bgp"
-	[ -z "$list_radius_coa" ]     && nft_radius_coa="255.255.255.255/32"  || nft_radius_coa="$nft_radius_coa"
+	[ -z "$list_ssh" ]            && nft_ssh="0.0.0.0/0"              || nft_ssh="$nft_ssh"
+	[ -z "$list_snmp" ]           && nft_snmp="0.0.0.0/0"             || nft_snmp="$nft_snmp"
+	[ -z "$list_cpe_ports" ]      && nft_cpe_ports="0"                || nft_cpe_ports="$nft_cpe_ports"
+	[ -z "$list_static_ips" ]     && nft_static="255.255.255.255/32"  || nft_static="$nft_static"
+	[ -z "$list_cpe_management" ] && nft_cpe_management="0.0.0.0/0"   || nft_cpe_management="$nft_cpe_management"
+	[ -z "$list_bgp" ]            && nft_bgp="0.0.0.0/0"              || nft_bgp="$nft_bgp"
+	[ -z "$list_radius_coa" ]     && nft_radius_coa="0.0.0.0/0"       || nft_radius_coa="$nft_radius_coa"
 	
 	nft_ssh=${nft_ssh//\//\\/}
 	nft_snmp=${nft_snmp//\//\\/}
