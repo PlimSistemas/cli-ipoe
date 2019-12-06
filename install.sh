@@ -363,8 +363,6 @@
 	
 	/system/clish/bin/users.sh add admin accel
 	
-	rm -rf /usr/local/src/cli-ipoe/
-
 
 #Banner
 #------------------------------------------------
