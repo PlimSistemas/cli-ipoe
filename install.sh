@@ -6,7 +6,7 @@
 	apt remove -y --purge iptables
 	apt install -y --no-install-recommends sudo net-tools curl nmap tcpdump htop atop mtr vlan ethtool apt-transport-https ca-certificates gnupg gnupg2 gnupg1 ruby mc bmon vlan ifenslave-2.6
 	apt install -y --no-install-recommends psmisc git git-core make cmake zlib1g-dev liblua5.1-dev libpcre3-dev build-essential libssl-dev libsnmp-dev linux-headers-`uname -r`
-	apt install -y --no-install-recommends facter dh-autoreconf libexpat1-dev telnet ntpdate ipset unzip sqlite3 libsqlite3-dev libperl-dev iptraf conntrack linux-perf neofetch nftables 
+	apt install -y --no-install-recommends virt-what dh-autoreconf libexpat1-dev telnet ntpdate ipset unzip sqlite3 libsqlite3-dev libperl-dev iptraf conntrack linux-perf neofetch nftables 
 
 #Preparação
 #------------------------------------------------
@@ -403,7 +403,10 @@
 	
 	(
 		echo "#!/bin/sh"
-		echo
+		echo 
+		echo "cat /etc/neofetch.logo"
+		echo "echo"
+		echo "echo"
 		echo "neofetch --config /etc/neofetch.conf"
 	) > /etc/update-motd.d/10-uname	
 
