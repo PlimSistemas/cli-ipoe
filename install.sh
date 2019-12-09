@@ -39,8 +39,6 @@
 #------------------------------------------------
 	unzip /usr/local/src/cli-ipoe/others/net-snmp-5.8.zip -d /usr/local/src/
 	cd /usr/local/src/net-snmp-5.8
-	
-	patch -p 1 < /usr/local/src/cli-ipoe/patch/net-snmp-ignore-interfaces.patch
 	./configure --with-default-snmp-version="2" --with-sys-contact="noc" --with-sys-location="noc" --with-logfile="/var/log/snmpd.log" --with-persistent-directory="/var/net-snmp" --exec_prefix=/usr --prefix=/usr
 	make
 	make install
@@ -332,8 +330,6 @@
 		echo
 		echo '/system/clish/bin/pbr.sh 1 reload'
 		echo '/system/firewall/firewall.sh'
-		echo
-		echo '/sbin/net-snmp-ignore-if &'
 		echo
 		echo 'exit 0'
 	) > /etc/rc.local
