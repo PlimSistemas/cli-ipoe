@@ -31,7 +31,7 @@
 	list_cpe_ports=$(sql_exec "select value1 from configs where path = 'system firewall group cpe-ports';" | tr '\n' ' ')
 	list_cpe_management=$(sql_exec "select value1 from configs where path = 'system firewall group cpe-management';" | tr '\n' ' ')
 	list_bgp=$(sql_exec "select value1 from configs where path = 'system firewall group acl-bgp';" | tr '\n' ' ')
-	list_radius_coa=$(sql_exec "select value1 from configs where path = 'system firewall group static-ip';" | tr '\n' ' ')
+	list_radius_coa=$(sql_exec "select value1 from configs where path = 'system firewall group acl-radius-coa';" | tr '\n' ' ')
 
 	read -a ar_ssh             <<< "$list_ssh"
 	read -a ar_snmp            <<< "$list_snmp"
