@@ -51,10 +51,7 @@
 #------------------------------------------------
 	mkdir -p cd /usr/local/src/accel-ppp-build
 	git clone git://git.code.sf.net/p/accel-ppp/code /usr/local/src/accel-ppp-code
-	
-	cd /usr/local/src/accel-ppp-code
-	patch -p 1 < /usr/local/src/cli-ipoe/patch/accel-ppp-shaper-mk-rate-limit.patch
-	
+
 	cd /usr/local/src/accel-ppp-build
 	cmake -DCMAKE_INSTALL_PREFIX=/usr -DCPACK_TYPE=Debian9 -DKDIR=/usr/src/linux-headers-`uname -r` -DBUILD_DRIVER=FALSE -DRADIUS=TRUE -DNETSNMP=TRUE -DSHAPER=TRUE -DLOG_PGSQL=FALSE -DLUA=TRUE -DBUILD_IPOE_DRIVER=TRUE -DBUILD_VLAN_MON_DRIVER=TRUE ../accel-ppp-code
 	make
@@ -86,7 +83,7 @@
 	echo "dummy" >> /etc/modules
 
 	depmod -a
-	modprobe ipoe
+		ipoe
 	modprobe vlan_mon
 
 	chmod +x /etc/init.d/accel-ppp
