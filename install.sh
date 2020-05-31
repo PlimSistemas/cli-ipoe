@@ -1,6 +1,5 @@
 #!/bin/bash
 
-
 #Atualizando Pacotes
 #------------------------------------------------
 	apt update
@@ -49,6 +48,7 @@
 	chmod +x /etc/init.d/snmpd
 	update-rc.d snmpd defaults
 
+
 #Instalando Accel-ppp
 #------------------------------------------------
 	mkdir -p cd /usr/local/src/accel-ppp-build
@@ -66,25 +66,22 @@
 	cpack -G DEB
 	apt install ./accel-ppp.deb
 	systemctl enable accel-ppp
-
-	cp /usr/local/src/net-snmp-5.8/mibs/* /usr/share/snmp/mibs/
 	
 	#dicionarios
+	cp /usr/local/src/accel-ppp-code/accel-pppd/extra/net-snmp/ACCEL-PPP-MIB.txt /usr/share/snmp/mibs/
+	cp /usr/local/src/net-snmp-5.8/mibs/* /usr/share/snmp/mibs/
 	cp /usr/local/src/cli-ipoe/dictionary/dictionary.accel /usr/share/accel-ppp/radius/
 	cp /usr/local/src/cli-ipoe/dictionary/dictionary.mikrotik /usr/share/accel-ppp/radius/
 	cp /usr/local/src/cli-ipoe/dictionary/dictionary.rfc6911 /usr/share/accel-ppp/radius/
 
-	cat /usr/local/src/cli-ipoe/dictionary/dictionary.rfc6911 >> /usr/share/accel-ppp/radius/dictionary
-	cat /usr/local/src/cli-ipoe/dictionary/dictionary.mikrotik >> /usr/share/accel-ppp/radius/dictionary
-	cat /usr/local/src/cli-ipoe/dictionary/dictionary.accel >> /usr/share/accel-ppp/radius/dictionary
-
-	
+	echo '$INCLUDE dictionary.rfc6911' >> /usr/share/accel-ppp/radius/dictionary
+	echo '$INCLUDE dictionary.mikrotik' >> /usr/share/accel-ppp/radius/dictionary
+	echo '$INCLUDE dictionary.accel' >> /usr/share/accel-ppp/radius/dictionary
 
 	mkdir -p /var/log/accel-ppp
 	chmod -R a+rwX /var/log/accel-ppp
 	chmod -R a+rwX /var/log/accel-ppp/*
 
-	cp /usr/local/src/accel-ppp-code/accel-pppd/extra/net-snmp/ACCEL-PPP-MIB.txt /usr/share/snmp/mibs/
 
 	echo "ipv6" >> /etc/modules
 	echo "ipoe" >> /etc/modules
@@ -96,19 +93,16 @@
 #Log Rotativo do Accel-ppp
 #------------------------------------------------
 	(
-		echo "/var/log/accel-ppp/*.log {"
-		echo "		size 50M"
-		echo "        missingok"
-		echo "		rotate 10"
-		echo "        sharedscripts"
-		echo "        postrotate"
-		echo "                test -r /var/run/accel-ppp.pid && kill -HUP `cat /var/run/accel-ppp.pid`"
-		echo "        endscript"
-		echo "}"
+		echo '/var/log/accel-ppp/*.log {'
+		echo '		size 50M'
+		echo '		missingok'
+		echo '		rotate 10'
+		echo '		sharedscripts'
+		echo '		postrotate'
+		echo '		test -r /var/run/accel-ppp.pid && kill -HUP `cat /var/run/accel-ppp.pid`'
+		echo '		endscript'
+		echo '}'
 	) > /etc/logrotate.d/accel-ppp
-
-	mkdir -p /var/log/accel-ppp
-
 
 #Otimizando
 #------------------------------------------------
@@ -178,16 +172,10 @@
 
     # PATH
     echo "PATH=/usr/sbin:/usr/bin:/sbin:/bin" >> $clist
-
-    # hora
     echo "0   *   *   *   *   /bin/run-parts --regex '.*' /etc/cron.hourly" >> $clist
-    # dia
     echo "0   2   *   *   *   /bin/run-parts --regex '.*' /etc/cron.daily" >> $clist
-    # semana
     echo "0   3   *   *   6   /bin/run-parts --regex '.*' /etc/cron.weekly" >> $clist
-    # mes
     echo "0   5   1   *   *   /bin/run-parts --regex '.*' /etc/cron.monthly" >> $clist
-    # minutos 1 5 10 15 30
     for min in 1 5 10 15 30; do
 	echo "*/$min   *   *   *   *   /bin/run-parts --regex '.*' /etc/cron.${min}min" >> $clist
     done
@@ -234,8 +222,8 @@
 	chmod +x /etc/cron.daily/backup_to_gdrive.sh
 	
 	#kexec-reboot
-	mv /usr/local/src/cli-ipoe/others/reboot2.sh /usr/bin/
-	chmod +x /usr/bin/
+	mv /usr/local/src/cli-ipoe/others/reboot2 /usr/bin/
+	chmod +x /usr/bin/reboot2
 
 #Configurando NTP Client
 #------------------------------------------------
@@ -250,9 +238,9 @@
 
 #Instalar klish
 #------------------------------------------------
-	cd /usr/local/src
-	git clone https://src.libcode.org/klish
-	cd klish
+	unzip /usr/local/src/cli-ipoe/others/klish-2.2.0.zip -d /usr/local/src/
+	cd /usr/local/src/klish
+	
 	sed -i 's/bool_t lockless = BOOL_FALSE/bool_t lockless = BOOL_TRUE/g' /usr/local/src/klish/bin/clish.c
 	sed -i '/sigset_t sigpipe_set;/a xml_path = \"/etc/clish\";' /usr/local/src/klish/bin/clish.c
 	
@@ -280,21 +268,21 @@
 	mv /usr/local/src/cli-ipoe/configs/snmp/ /system/configs
 	
 	chmod +x /system/clish/bin/*
-	
+		
 	rm -rf /etc/snmp/snmpd.conf	
 	ln -s /system/configs/snmp/snmpd.conf /etc/snmp/	
 	
 	ln -s /system/configs/accel-ppp/* /etc/ 
 	ln -s /system/clish /etc/
 
+	rm /etc/nftables.conf
+	ln -s /system/firewall/nftables.conf /etc/ 
+
 	#mv /usr/local/src/cli-ipoe/others/net-snmp-ignore-if /sbin/
 	#chmod +x /sbin/net-snmp-ignore-if
 	
 	mv /usr/local/src/cli-ipoe/scripts /system/
 	chmod +x /system/scripts/*
-	
-	
-	
 
 
 #Configurando rc.local
