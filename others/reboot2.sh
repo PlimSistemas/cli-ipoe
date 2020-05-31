@@ -1,0 +1,259 @@
+#!/usr/bin/env ruby
+# kexec-reboot - Easily choose a kernel to kexec
+# Copyright (C) 2014 Michael Hampton <support@ringingliberty.com>
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+require 'optparse'
+
+# Find a mount point given the device special
+def device_to_mount_point(device)
+  if File.ftype(device) != "blockSpecial" then
+    STDERR.puts("Device #{device} isn't a block device\n")
+    return nil
+  end
+  proc_mounts = Hash[IO.readlines('/proc/mounts').collect { |line| line.split[0..1] }]
+  proc_mounts.delete("rootfs")          # Ignore this if present
+  proc_mounts.keys.each do |key|        # Try to resolve symlinks because Ubuntu is inconsistent
+    begin
+      real_path = File.realpath(key)
+    rescue
+      real_path = key
+    end
+    if (real_path != key)
+      proc_mounts[real_path] = proc_mounts[key]
+      proc_mounts.delete(key)
+    end
+  end
+
+  mount_point = proc_mounts[device]
+  mount_point = "" if mount_point == "/"  # Eliminate double /
+  if mount_point.nil? then
+    STDERR.puts "Can't find the mount point for device #{device}\n"
+    return nil
+  end
+  mount_point
+end
+
+# Find a mount point given the GRUB device and device map
+def device_map_to_mount_point(device, device_map)
+  dev = device.match(/(hd\d+)/)
+  part = device.match(/hd\d+,(\d+)/)
+  mount_point = device_map.match(/\(#{dev[1]}\)\s+(.+)$/)
+  mount_point_part = 1 + Integer(part[1]) if !part.nil?
+  # Partitions requiring a p, e.g. /dev/cciss/c0d0p1
+  device_path = "#{mount_point[1]}p#{mount_point_part}"
+  if !File.exists?(device_path) then
+    # Plain parittions e.g. /dev/sda1
+    device_path = "#{mount_point[1]}#{mount_point_part}"
+    if !File.exists?(device_path) then
+      STDERR.puts("Can't find partition #{mount_point_part} for the device #{mount_point[1]} from #{device}\n")
+      return nil
+    end
+  end
+  device_to_mount_point(device_path)
+end
+
+# Find a mount point given the device UUID
+def uuid_to_mount_point(uuid)
+  begin
+    device = File.realpath("/dev/disk/by-uuid/#{uuid}")
+  rescue Errno::ENOENT
+    STDERR.puts "No such file or directory, uuid #{uuid}\n"
+    return nil
+  end
+  device_to_mount_point(device)
+end
+
+# Scan directories to find the one containing the given path
+def locate_kernel(kernel)
+  ["", "/boot"].each do |dir|
+    STDERR.puts "Looking for #{dir}#{kernel}\n" if $verbose
+    return dir if File.exists?("#{dir}#{kernel}")
+  end
+  raise Errno::ENOENT
+end
+
+# Load the available kernels from the given GRUB 1 configuration file
+def grub1_kernel_entries(config)
+  device_map = IO.read("/boot/grub/device.map")
+  entries = Array.new
+  config.scan(/title (.+?$).+?root \(([^\)]+)\).+?kernel ([^ ]+) (.+?)$.+?initrd (.+?$)/mu).each do |entry|
+    begin
+      # Try hard-coded locations, works 99.9% of the time
+      mount_point = locate_kernel(entry[2])
+    rescue Errno::ENOENT
+      # Fallback to reading grub1 device.map, which is often wrong
+      mount_point = device_map_to_mount_point(entry[1], device_map)
+    end
+    name = entry[0].strip
+    kernel = "#{mount_point}#{entry[2]}"
+    initrd = "#{mount_point}#{entry[4]}"
+    cmdline = entry[3].strip
+    # Sanity check the kernel and initrd; they must be present
+    if !File.readable?(kernel) then
+      STDERR.puts "Kernel #{kernel} is not readable\n"
+      next
+    end
+    if !File.readable?(initrd) then
+      STDERR.puts "Initrd #{initrd} is not readable\n"
+      next
+    end
+    entries.push({
+      :name    => name,
+      :kernel  => kernel,
+      :initrd  => initrd,
+      :cmdline => cmdline,
+    })
+  end
+  entries
+end
+
+# Load the available kernels from the given GRUB 2 configuration file
+def grub2_kernel_entries(config)
+  entries = Array.new
+  config.scan(/menuentry '([^']+)'.+?\{.+?search.+?([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}|[0-9A-F]{4}-[0-9A-F]{4}).+?\s+linux(efi|16)?\s+([^ ]+) (.+?)$.+?initrd(efi|16)?\s+(.+?)$.+?\}/mu).each do |entry|
+    mount_point = uuid_to_mount_point(entry[1])
+    name = entry[0].strip
+    kernel = "#{mount_point}#{entry[3]}"
+    initrd = "#{mount_point}#{entry[6]}"
+    cmdline = entry[4].strip
+    # Sanity check the kernel and initrd; they must be present
+    if !File.readable?(kernel) then
+      STDERR.puts "Kernel #{kernel} is not readable\n"
+      next
+    end
+    if !File.readable?(initrd) then
+      STDERR.puts "Initrd #{initrd} is not readable\n"
+      next
+    end
+    entries.push({
+      :name    => name,
+      :kernel  => kernel,
+      :initrd  => initrd,
+      :cmdline => cmdline,
+    })
+  end
+  entries
+end
+
+# Load a grub configuration file and process it
+def process_grub_config
+  possible_grub_configs = [
+    ["/etc/grub2-efi.cfg",   :grub2_kernel_entries],
+    ["/etc/grub2.cfg",       :grub2_kernel_entries],
+    ["/boot/grub2/grub.cfg", :grub2_kernel_entries],
+    ["/boot/grub/grub.cfg",  :grub2_kernel_entries],
+    ["/etc/grub.conf",       :grub1_kernel_entries],
+    ["/boot/grub/menu.lst",  :grub1_kernel_entries],
+  ]
+  possible_grub_configs.each do |filename, handler|
+    begin
+      entries = method(handler).call(IO::read(filename))
+      if !entries.empty? then
+        puts "Read GRUB configuration from #{filename}\n" if $verbose
+        return entries
+      end
+    rescue Errno::EACCES
+      STDERR.puts("#{$!}\nYou must be root to run this utility.\n")
+      exit 1
+    rescue Errno::ENOENT
+      next
+    end
+  end
+  STDERR.puts("Couldn't find a grub configuration anywhere!\n")
+  exit 1
+end
+
+def kexec(entry)
+  print "Staging kernel #{entry[:name]}\n" if $verbose
+  print "Unloading previous kexec target, if any\n" if $verbose
+  `/sbin/kexec -u`
+  print "Running /sbin/kexec -l #{entry[:kernel]} --append='#{entry[:cmdline]}' --initrd=#{entry[:initrd]}\n" if $verbose
+  system "/sbin/kexec", "-l", entry[:kernel], "--append=#{entry[:cmdline]}", "--initrd=#{entry[:initrd]}"
+end
+
+def interactive_select_kernel
+  entries = process_grub_config
+
+  selection = nil
+  loop do
+    puts "\nSelect a kernel to stage:\n\n"
+
+    entries.each_with_index do |entry, index|
+      selection_number = index + 1
+      puts "#{selection_number}: #{entry[:name]}\n"
+    end
+
+    print "\nYour selection: "
+    selection = gets.chomp
+    begin
+      selection = Integer(selection)
+    rescue ArgumentError
+      return nil
+    end
+    break if selection.between?(0, entries.count)
+  end
+
+  return nil if selection == 0
+  entries[selection - 1]
+end
+
+def select_latest_kernel
+  entries = process_grub_config
+  entries.first
+end
+
+options = {}
+
+opts = OptionParser.new do |o|
+  o.banner = "Usage: kexec-reboot [options]"
+
+  o.on("-i", "--interactive", "Choose the kernel to stage from a list") do |i|
+    options[:interactive] = i
+  end
+  o.on("-l", "--latest", "Stage the latest kernel") do |l|
+    options[:latest] = l
+  end
+  o.on("-r", "--reboot", "Reboot immediately after staging the kernel") do |r|
+    options[:reboot] = r
+  end
+  o.on("-v", "--[no-]verbose", "Extra verbosity.") do |v|
+    $verbose = v
+  end
+end
+
+opts.parse!
+
+if (options[:interactive]) then
+  entry = interactive_select_kernel
+  if (entry.nil?) then
+    STDERR.puts "Canceled.\n"
+    exit 1
+  end
+elsif (options[:latest]) then
+  entry = select_latest_kernel
+else
+  STDERR.puts opts.help
+  exit 1
+end
+
+if !entry.nil? then
+  print "Staging #{entry[:name]}\n"
+  entry = kexec(entry)
+
+  if options[:reboot] then
+    `shutdown -r now`
+  end
+end

@@ -1,11 +1,13 @@
 #!/bin/bash
-	
+
+
 #Atualizando Pacotes
 #------------------------------------------------
 	apt update
+	apt upgrade
 	apt remove -y --purge iptables
 	apt install -y --no-install-recommends sudo net-tools curl nmap tcpdump htop atop mtr vlan ethtool apt-transport-https ca-certificates gnupg gnupg2 gnupg1 ruby mc bmon vlan ifenslave-2.6
-	apt install -y --no-install-recommends psmisc git git-core make cmake zlib1g-dev liblua5.1-dev libpcre3-dev build-essential libssl-dev libsnmp-dev linux-headers-`uname -r`
+	apt install -y --no-install-recommends kexec-tools psmisc git git-core make cmake zlib1g-dev liblua5.1-dev libpcre3-dev build-essential libssl-dev libsnmp-dev linux-headers-`uname -r`
 	apt install -y --no-install-recommends virt-what dh-autoreconf libexpat1-dev telnet ntpdate ipset unzip sqlite3 libsqlite3-dev libperl-dev iptraf conntrack linux-perf neofetch nftables 
 
 #Preparação
@@ -54,25 +56,34 @@
 
 	cd /usr/local/src/accel-ppp-build
 	cmake -DCMAKE_INSTALL_PREFIX=/usr -DCPACK_TYPE=Debian9 -DKDIR=/usr/src/linux-headers-`uname -r` -DBUILD_DRIVER=FALSE -DRADIUS=TRUE -DNETSNMP=TRUE -DSHAPER=TRUE -DLOG_PGSQL=FALSE -DLUA=TRUE -DBUILD_IPOE_DRIVER=TRUE -DBUILD_VLAN_MON_DRIVER=TRUE ../accel-ppp-code
+
 	make
-	make install
-	
+	cp drivers/ipoe/driver/ipoe.ko /lib/modules/$(uname -r)
+	cp drivers/vlan_mon/driver/vlan_mon.ko /lib/modules/$(uname -r)
+	depmod -a
+	modprobe vlan_mon
+	modprobe ipoe
+	cpack -G DEB
+	apt install ./accel-ppp.deb
+	systemctl enable accel-ppp
+
 	cp /usr/local/src/net-snmp-5.8/mibs/* /usr/share/snmp/mibs/
 	
 	#dicionarios
+	cp /usr/local/src/cli-ipoe/dictionary/dictionary.accel /usr/share/accel-ppp/radius/
 	cp /usr/local/src/cli-ipoe/dictionary/dictionary.mikrotik /usr/share/accel-ppp/radius/
 	cp /usr/local/src/cli-ipoe/dictionary/dictionary.rfc6911 /usr/share/accel-ppp/radius/
-	cat /usr/local/src/cli-ipoe/dictionary/dictionary.custom >> /usr/share/accel-ppp/radius/dictionary
+
+	cat /usr/local/src/cli-ipoe/dictionary/dictionary.rfc6911 >> /usr/share/accel-ppp/radius/dictionary
+	cat /usr/local/src/cli-ipoe/dictionary/dictionary.mikrotik >> /usr/share/accel-ppp/radius/dictionary
+	cat /usr/local/src/cli-ipoe/dictionary/dictionary.accel >> /usr/share/accel-ppp/radius/dictionary
+
 	
 
 	mkdir -p /var/log/accel-ppp
 	chmod -R a+rwX /var/log/accel-ppp
 	chmod -R a+rwX /var/log/accel-ppp/*
 
-	mkdir -p /lib/modules/`uname -r`/accel
-	cp /usr/local/src/accel-ppp-build/drivers/ipoe/driver/ipoe.ko /lib/modules/`uname -r`/accel/
-	cp /usr/local/src/accel-ppp-build/drivers/vlan_mon/driver/vlan_mon.ko /lib/modules/`uname -r`/accel/
-	
 	cp /usr/local/src/accel-ppp-code/accel-pppd/extra/net-snmp/ACCEL-PPP-MIB.txt /usr/share/snmp/mibs/
 
 	echo "ipv6" >> /etc/modules
@@ -81,16 +92,6 @@
 	echo "8021q" >> /etc/modules
 	echo "bonding" >> /etc/modules
 	echo "dummy" >> /etc/modules
-
-	depmod -a
-		ipoe
-	modprobe vlan_mon
-
-	chmod +x /etc/init.d/accel-ppp
-	update-rc.d accel-ppp defaults
-	
-	systemctl is-enabled accel-ppp.service
-	systemctl enable accel-ppp.service
 
 #Log Rotativo do Accel-ppp
 #------------------------------------------------
@@ -230,9 +231,11 @@
 
     # Backup automatico Google Drive
 	mv /usr/local/src/cli-ipoe/others/backup_to_gdrive.sh /etc/cron.daily/
-   chmod +x /etc/cron.daily/backup_to_gdrive.sh
+	chmod +x /etc/cron.daily/backup_to_gdrive.sh
 	
-	
+	#kexec-reboot
+	mv /usr/local/src/cli-ipoe/others/reboot2.sh /usr/bin/
+	chmod +x /usr/bin/
 
 #Configurando NTP Client
 #------------------------------------------------
@@ -284,8 +287,8 @@
 	ln -s /system/configs/accel-ppp/* /etc/ 
 	ln -s /system/clish /etc/
 
-	mv /usr/local/src/cli-ipoe/others/net-snmp-ignore-if /sbin/
-	chmod +x /sbin/net-snmp-ignore-if
+	#mv /usr/local/src/cli-ipoe/others/net-snmp-ignore-if /sbin/
+	#chmod +x /sbin/net-snmp-ignore-if
 	
 	mv /usr/local/src/cli-ipoe/scripts /system/
 	chmod +x /system/scripts/*
