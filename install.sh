@@ -38,11 +38,11 @@
 	
 #Instalando SNMP
 #------------------------------------------------
-	unzip /usr/local/src/cli-ipoe/others/net-snmp-5.8.zip -d /usr/local/src/
-	cd /usr/local/src/net-snmp-5.8
+	unzip /usr/local/src/cli-ipoe/others/net-snmp-5.8.1.pre2.zip -d /usr/local/src/
+	cd /usr/local/src/net-snmp-5.8.1.pre2
 	./configure --with-default-snmp-version="2" --with-sys-contact="noc" --with-sys-location="noc" --with-logfile="/var/log/snmpd.log" --with-persistent-directory="/var/net-snmp" --exec_prefix=/usr --prefix=/usr
-	make
-	make install
+	make -j7
+	make install -j7
 
 	cp /usr/local/src/cli-ipoe/others/snmpd /etc/init.d/
 	chmod +x /etc/init.d/snmpd
@@ -51,7 +51,7 @@
 
 #Instalando Accel-ppp
 #------------------------------------------------
-	mkdir -p cd /usr/local/src/accel-ppp-build
+	mkdir -p /usr/local/src/accel-ppp-build
 	git clone git://git.code.sf.net/p/accel-ppp/code /usr/local/src/accel-ppp-code
 
 	cd /usr/local/src/accel-ppp-build
@@ -69,7 +69,7 @@
 	
 	#dicionarios
 	cp /usr/local/src/accel-ppp-code/accel-pppd/extra/net-snmp/ACCEL-PPP-MIB.txt /usr/share/snmp/mibs/
-	cp /usr/local/src/net-snmp-5.8/mibs/* /usr/share/snmp/mibs/
+	cp /usr/local/src/net-snmp-5.8.1.pre2/mibs/* /usr/share/snmp/mibs/
 	cp /usr/local/src/cli-ipoe/dictionary/dictionary.accel /usr/share/accel-ppp/radius/
 	cp /usr/local/src/cli-ipoe/dictionary/dictionary.mikrotik /usr/share/accel-ppp/radius/
 	cp /usr/local/src/cli-ipoe/dictionary/dictionary.rfc6911 /usr/share/accel-ppp/radius/
@@ -246,8 +246,8 @@
 	
 	./autogen.sh
 	./configure --prefix=/usr
-	make
-	make install
+	make -j7
+	make install -j7
 	
 
 #Instalar configs e CLI config
