@@ -7,7 +7,7 @@
 	apt remove -y --purge iptables
 	apt install -y --no-install-recommends sudo net-tools curl nmap tcpdump htop atop mtr vlan ethtool apt-transport-https ca-certificates gnupg gnupg2 gnupg1 ruby mc bmon vlan ifenslave-2.6
 	apt install -y --no-install-recommends kexec-tools psmisc git git-core make cmake zlib1g-dev liblua5.1-dev libpcre3-dev build-essential libssl-dev libsnmp-dev linux-headers-`uname -r`
-	apt install -y --no-install-recommends virt-what dh-autoreconf libexpat1-dev telnet ntpdate ipset unzip sqlite3 libsqlite3-dev libperl-dev iptraf conntrack linux-perf neofetch nftables 
+	apt install -y --no-install-recommends virt-what dh-autoreconf libexpat1-dev telnet ntpdate ipset unzip sqlite3 libsqlite3-dev libperl-dev iptraf linux-perf neofetch nftables 
 
 #Preparação
 #------------------------------------------------
@@ -35,14 +35,13 @@
 	/etc/init.d/frr restart
 	
 	
-	
 #Instalando SNMP
 #------------------------------------------------
 	unzip /usr/local/src/cli-ipoe/others/net-snmp-5.8.1.pre2.zip -d /usr/local/src/
 	cd /usr/local/src/net-snmp-5.8.1.pre2
 	./configure --with-default-snmp-version="2" --with-sys-contact="noc" --with-sys-location="noc" --with-logfile="/var/log/snmpd.log" --with-persistent-directory="/var/net-snmp" --exec_prefix=/usr --prefix=/usr
-	make -j7
-	make install -j7
+	make
+	make install
 
 	cp /usr/local/src/cli-ipoe/others/snmpd /etc/init.d/
 	chmod +x /etc/init.d/snmpd
@@ -58,8 +57,8 @@
 	cmake -DCMAKE_INSTALL_PREFIX=/usr -DCPACK_TYPE=Debian9 -DKDIR=/usr/src/linux-headers-`uname -r` -DBUILD_DRIVER=FALSE -DRADIUS=TRUE -DNETSNMP=TRUE -DSHAPER=TRUE -DLOG_PGSQL=FALSE -DLUA=TRUE -DBUILD_IPOE_DRIVER=TRUE -DBUILD_VLAN_MON_DRIVER=TRUE ../accel-ppp-code
 
 	make
-	cp drivers/ipoe/driver/ipoe.ko /lib/modules/$(uname -r)
-	cp drivers/vlan_mon/driver/vlan_mon.ko /lib/modules/$(uname -r)
+	cp drivers/ipoe/driver/ipoe.ko /usr/lib/
+	cp drivers/vlan_mon/driver/vlan_mon.ko /usr/lib/
 	depmod -a
 	modprobe vlan_mon
 	modprobe ipoe
@@ -108,31 +107,13 @@
 #------------------------------------------------
 	(
 		echo "net.ipv4.ip_forward=1"
-		echo "net.ipv6.conf.all.forwarding=1"
 		echo "net.ipv4.neigh.default.gc_thresh1 = 4096"
 		echo "net.ipv4.neigh.default.gc_thresh2 = 8192"
 		echo "net.ipv4.neigh.default.gc_thresh3 = 12288"
-		echo "net.ipv4.netfilter.ip_conntrack_max=1572864"
-		
-		echo "net.netfilter.nf_conntrack_max = 1572864"
-		echo "net.netfilter.nf_conntrack_generic_timeout = 60"
-		echo "net.netfilter.nf_conntrack_tcp_timeout_syn_sent = 15"
-		echo "net.netfilter.nf_conntrack_tcp_timeout_syn_recv = 30"
-		echo "net.netfilter.nf_conntrack_tcp_timeout_established = 600"
-		echo "net.netfilter.nf_conntrack_tcp_timeout_fin_wait = 30"
-		echo "net.netfilter.nf_conntrack_tcp_timeout_close_wait = 20"
-		echo "net.netfilter.nf_conntrack_tcp_timeout_last_ack = 30"
-		echo "net.netfilter.nf_conntrack_tcp_timeout_time_wait = 30"
-		echo "net.netfilter.nf_conntrack_tcp_timeout_close = 10"
-		echo "net.netfilter.nf_conntrack_tcp_timeout_max_retrans = 300"
-		echo "net.netfilter.nf_conntrack_tcp_timeout_unacknowledged = 300"
-		echo "net.netfilter.nf_conntrack_udp_timeout = 30"
-		echo "net.netfilter.nf_conntrack_udp_timeout_stream = 180"
-		echo "#net.netfilter.nf_conntrack_icmpv6_timeout = 30"
-		echo "net.netfilter.nf_conntrack_icmp_timeout = 10"
-		echo "net.netfilter.nf_conntrack_events_retry_timeout = 15"
-		echo "net.netfilter.nf_conntrack_checksum=0"
-		echo "net.ipv4.netfilter.ip_conntrack_checksum=0"
+		echo "net.ipv6.conf.all.forwarding=1"
+		echo "net.ipv6.neigh.default.gc_thresh1 = 4096"
+		echo "net.ipv6.neigh.default.gc_thresh2 = 8192"
+		echo "net.ipv6.neigh.default.gc_thresh3 = 12288"
 		echo "net.core.dev_weight = 16"
 		echo "net.core.netdev_budget = 256"
 		echo "net.core.netdev_max_backlog = 16000"
@@ -140,8 +121,6 @@
 		echo "vm.dirty_background_ratio = 5"
 		echo "vm.dirty_ratio = 10"
 	) >> /etc/sysctl.conf
-
-	echo "options nf_conntrack hashsize=1193572" > /etc/modprobe.d/nf_conntrack.conf
 
 	echo "100     accel/ipoe"  >> /etc/iproute2/rt_protos
 	echo "101     PBR_1"  >> /etc/iproute2/rt_tables	
@@ -246,8 +225,8 @@
 	
 	./autogen.sh
 	./configure --prefix=/usr
-	make -j7
-	make install -j7
+	make
+	make install
 	
 
 #Instalar configs e CLI config
@@ -360,7 +339,6 @@
 		echo "#    / _ \| |  | |   |  _| | |   _____| |_) | |_) | |_) | #"
 		echo "#   / ___ \ |__| |___| |___| |__|_____|  __/|  __/|  __/  #"
 		echo "#  /_/   \_\____\____|_____|_____|    |_|   |_|   |_|     #"
-		echo "#                                                         #"
 		echo "#                                                         #"
 		echo "#               Nome Provedor - JSG PPPoE 01              #"
 		echo "#        Voce esta entrando em uma area restrita.         #"
