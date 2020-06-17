@@ -290,6 +290,10 @@
 		echo 'sleep 5'
 		echo "ifconfig eno1 up"
 		echo "ifconfig eno2 up"
+		echo ''
+		echo 'killall irqbalance'
+		echo 'sleep 3'
+		echo ''
 		echo '/system/scripts/irq_affinity.sh -X 0-7 eno1'
 		echo '/system/scripts/irq_affinity.sh -X 8-15 eno2'
 		echo '/system/scripts/ethtool.sh eno1'
