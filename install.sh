@@ -285,7 +285,7 @@
 
 
 	(
-		echo '#!/bin/sh -e'
+		echo '#!/bin/sh'
 		echo
 		echo 'sleep 5'
 		echo "ifconfig eno1 up"
