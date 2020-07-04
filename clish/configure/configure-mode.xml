@@ -37,6 +37,12 @@
 		<COMMAND name="show system" 		help="Configuracoes do sistema">		<ACTION>/system/clish/bin/config_get.sh show system	</ACTION></COMMAND>
 		<COMMAND name="show system backup" 	help="Configuracoes de backup">			<ACTION>/system/clish/bin/backup.sh show			</ACTION></COMMAND>
 		<COMMAND name="show system login"	help="Configuracoes de usuarios">		<ACTION>/system/clish/bin/users.sh list				</ACTION></COMMAND>
+
+		<COMMAND name="show system connection"	 		help="Definições de Conexão com o Accel-CMD"> 																													<ACTION>/system/clish/bin/connection.sh show all "null"		</ACTION></COMMAND>
+		<COMMAND name="show system connection host"		help="Accel-cmd host">															<PARAM name="host" help="Endereço IP" 	ptype="IP_ADDR" 	 optional="false"/>	<ACTION>/system/clish/bin/connection.sh show value1 "null"	</ACTION></COMMAND>		
+		<COMMAND name="show system connection port" 	help="Accel-cmd Porta">															<PARAM name="port" help="Porta" 		ptype="PORT" 		 optional="false"/>	<ACTION>/system/clish/bin/connection.sh show value2 "null"	</ACTION></COMMAND>		
+		<COMMAND name="show system connection pass" 	help="Accel-cmd Password">														<PARAM name="pass" help="Senha" 		ptype="STRING" 		 optional="false"/>	<ACTION>/system/clish/bin/connection.sh show value3 "null"	</ACTION></COMMAND>
+
 	
 		<COMMAND name="show system firewall" 						help="Configuracoes de firewall"/>
 		<COMMAND name="show system firewall status"					help="Verifcar status do firewall">												<ACTION>/system/clish/bin/firewall.sh status				</ACTION></COMMAND>
@@ -64,6 +70,12 @@
 		<COMMAND name="delete system"					help="Deletar configuracao do sistema"/>	
 		<COMMAND name="delete system backup"			help="Deletar configuracao de backup"/>	
 		<COMMAND name="delete system backup folder" 	help=""><ACTION> /system/clish/bin/backup.sh del</ACTION></COMMAND>
+
+		<COMMAND name="delete system connection"	 	help="Remove Definições de Conexão com o Accel-CMD"> 																													<ACTION>/system/clish/bin/connection.sh del all "null"		</ACTION></COMMAND>
+		<COMMAND name="delete system connection host"	help="Remove Accel-cmd host">															<PARAM name="host" help="Endereço IP" 	ptype="IP_ADDR" 	 optional="false"/>	<ACTION>/system/clish/bin/connection.sh del value1 "null"	</ACTION></COMMAND>		
+		<COMMAND name="delete system connection port" 	help="Remove Accel-cmd Porta">															<PARAM name="port" help="Porta" 		ptype="PORT" 		 optional="false"/>	<ACTION>/system/clish/bin/connection.sh del value2 "null"	</ACTION></COMMAND>		
+		<COMMAND name="delete system connection pass" 	help="Remove Accel-cmd Password">														<PARAM name="pass" help="Senha" 		ptype="STRING" 		 optional="false"/>	<ACTION>/system/clish/bin/connection.sh del value3 "null"	</ACTION></COMMAND>
+
 
 		<COMMAND name="delete system login"	help="Deletar usuario do sistema"/>
 
@@ -95,6 +107,12 @@
 		<COMMAND name="set system backup enable"					help="Ativar ou desativar Backup automatico">									<PARAM name="status" help="" ptype="BOOL" optional="false"/><ACTION>/system/clish/bin/backup.sh enable ${status}</ACTION></COMMAND>
 		<COMMAND name="set system backup folder"					help="Pasta do Google Driver">													<PARAM name="folder" help="" ptype="STRING" optional="false"/><ACTION>/system/clish/bin/backup.sh set ${folder}</ACTION></COMMAND>
 		<COMMAND name="set system backup auth"						help="Obter autorizacao para utilizar o Google Drive">							<ACTION>/system/clish/bin/backup.sh auth</ACTION></COMMAND>
+
+		<COMMAND name="set system connection"	 					help="Difinições de Conexão com o Accel-CMD"/>			
+		<COMMAND name="set system connection host"			 		help="Accel-cmd host">															<PARAM name="host" help="Endereço IP" 	ptype="IP_ADDR" 	 optional="false"/>	<ACTION>/system/clish/bin/connection.sh set value1 "${host}"	</ACTION></COMMAND>		
+		<COMMAND name="set system connection port" 					help="Accel-cmd Porta">															<PARAM name="port" help="Porta" 		ptype="PORT" 		 optional="false"/>	<ACTION>/system/clish/bin/connection.sh set value2 "${port}"	</ACTION></COMMAND>		
+		<COMMAND name="set system connection pass" 					help="Accel-cmd Password">														<PARAM name="pass" help="Senha" 		ptype="STRING" 		 optional="false"/>	<ACTION>/system/clish/bin/connection.sh set value3 "${pass}"	</ACTION></COMMAND>
+
 		<COMMAND name="set system firewall" 						help="Configuracoes de Firewall"/>
 		<COMMAND name="set system firewall enable"					help="Ativar ou desativar o firewall">											<PARAM name="status" help="" ptype="BOOL" optional="false"/><ACTION>/system/clish/bin/firewall.sh enable ${status}</ACTION></COMMAND>
 		<COMMAND name="set system firewall group" 					help="Grupos de IPs, Redes ou Portas"/>			

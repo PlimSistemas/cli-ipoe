@@ -1,15 +1,15 @@
 # SHOW VERSION
 #------------------------------------------------
 	arc=$(uname -m)	
-	vendor=$(dmidecode -s system-manufacturer)
-	model=$(dmidecode -s system-product-name)
-	serial=$(dmidecode -s system-serial-number)
-	uuid=$(dmidecode -s system-uuid)
+	vendor=$(sudo dmidecode -s system-manufacturer)
+	model=$(sudo dmidecode -s system-product-name)
+	serial=$(sudo dmidecode -s system-serial-number)
+	uuid=$(sudo dmidecode -s system-uuid)
 	cpu_count=$(cat /proc/cpuinfo | grep "physical id" | sort -u | wc -l)
 	cpu_name=$(cat /proc/cpuinfo | grep 'model name' | uniq | sed 's/model name//g' | xargs | cut -c 3-)
-	cpu_cores=$(nproc)
-	os_family=$(lsb_release -is)
-	os_desc=$(lsb_release -ds)
+	cpu_cores=$(sudo nproc)
+	os_family=$(sudo lsb_release -is)
+	os_desc=$(sudo lsb_release -ds)
 
 	type=$(virt-what | wc -m)
 	[ -z "$type" ] && type="Bare Metal" || type="Virtual"

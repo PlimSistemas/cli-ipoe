@@ -262,6 +262,8 @@
 	
 	mv /usr/local/src/cli-ipoe/scripts /system/
 	chmod +x /system/scripts/*
+	
+	ln -s /system/clish/bin/run-command.sh /usr/local/bin/run-command	
 
 
 #Configurando rc.local

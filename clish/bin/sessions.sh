@@ -1,5 +1,8 @@
 #!/bin/bash
 
+. /system/clish/bin/functions.sh
+accel_cmd=$(accel_con)
+
 # FIELDS
 #------------------------------------------------
 	fields="called-sid,ifname,username,calling-sid,ip,tx-bytes,rx-bytes,rate-limit,state,uptime"
@@ -8,7 +11,7 @@
 # SHOW
 #------------------------------------------------
 	if [ "$1" == "show" ] && [ "$2" == "" ]; then
-		accel-cmd show sessions "$fields"
+		run-command $accel_cmd show sessions "$fields" | less
 		exit
 	fi
 
@@ -18,13 +21,13 @@
 	if [ "$1" == "count" ]; then
 
 		echo "[Total]"
-		accel-cmd show stat | grep -A 3 "sessions:" | sed -e "1d"
+		run-command $accel_cmd show stat | grep -A 3 "sessions:" | sed -e "1d"
 
 		echo "[PPPoE]"
-		accel-cmd show stat | grep -A 9 "pppoe:" | sed -e "1d"
+		run-command $accel_cmd show stat | grep -A 9 "pppoe:" | sed -e "1d"
 
 		echo "[IPoE]"
-		accel-cmd show stat | grep -A 3 "ipoe:" | sed -e "1d"
+		run-command $accel_cmd show stat | grep -A 3 "ipoe:" | sed -e "1d"
 	fi
 
 
@@ -32,7 +35,7 @@
 #------------------------------------------------
 	if [ "$1" == "show" ]; then	
 
-		LIST="$(accel-cmd show sessions $fields)"
+		LIST="$(run-command $accel_cmd show sessions $fields)"
 		HEAD="$(echo "$LIST" | grep -A 1 ifname)"
 		
 		FIST="${3:0:1}"
@@ -113,7 +116,7 @@
 #------------------------------------------------
 	if [ "$1" == "bandwidth" ]; then
 
-		ifname=$(accel-cmd show sessions ifname match username $2 | sed -n "3p" | tr -d '[[:space:]]')
+		ifname=$(run-command $accel_cmd show sessions ifname match username $2 | sed -n "3p" | tr -d '[[:space:]]')
 
 		if test -z "$ifname"; then
 			echo "Subscriber not conected!"
@@ -128,7 +131,7 @@
 #------------------------------------------------
 	if [ "$1" == "ping" ]; then
 
-		ip_address=$(sudo accel-cmd show sessions ip match username $2 | sed -n "3p" | tr -d '[[:space:]]')
+		ip_address=$(sudo $accel_cmd show sessions ip match username $2 | sed -n "3p" | tr -d '[[:space:]]')
 
 		if test -z "$ip_address"; then
 			echo "Subscriber not conected!"
@@ -144,12 +147,12 @@
 #------------------------------------------------
 	if [ "$1" == "disconect" ]; then
 
-		ifname=$(sudo accel-cmd show sessions ifname match username $2 | sed -n "3p" | tr -d '[[:space:]]')
+		ifname=$(sudo run-command $accel_cmd show sessions ifname match username $2 | sed -n "3p" | tr -d '[[:space:]]')
 
 		if test -z "$ifname"; then
 			echo "Subscriber not conected!"
 		else
-			sudo accel-cmd terminate if "$ifname"
+			sudo run-command $accel_cmd terminate if "$ifname"
 		fi
 
 	fi
@@ -160,7 +163,7 @@
 #------------------------------------------------
 	if [ "$1" == "touch" ]; then
 
-		ifname=$(sudo accel-cmd show sessions ifname match username $2 | sed -n "3p" | tr -d '[[:space:]]')
+		ifname=$(sudo $accel_cmd show sessions ifname match username $2 | sed -n "3p" | tr -d '[[:space:]]')
 
 		if test -z "$ifname"; then
 			echo "Subscriber not conected!"
