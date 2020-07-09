@@ -136,6 +136,7 @@
 
 # CRONTAB
 #------------------------------------------------
+	sed -i 's/#cron./cron./' /etc/rsyslog.conf
     clist="/tmp/clist"
     mkdir -p /etc/cron.hourly
     mkdir -p /etc/cron.daily
