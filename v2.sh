@@ -1,13 +1,63 @@
 #!/bin/bash
-
+	
 #Atualizando Pacotes
 #------------------------------------------------
 	apt update
-	#apt upgrade
+	apt upgrade
 	apt remove -y --purge iptables
-	apt install -y --no-install-recommends sudo vim net-tools curl nmap tcpdump htop atop mtr vlan ethtool apt-transport-https ca-certificates gnupg gnupg2 gnupg1 ruby mc bmon vlan ifenslave-2.6
-	apt install -y --no-install-recommends kexec-tools psmisc git git-core make cmake zlib1g-dev liblua5.1-dev libpcre3-dev build-essential libssl-dev libsnmp-dev linux-headers-`uname -r`
-	apt install -y --no-install-recommends virt-what dh-autoreconf libexpat1-dev telnet ntpdate ipset unzip sqlite3 libsqlite3-dev libperl-dev iptraf linux-perf neofetch nftables 
+	apt install -y --no-install-recommends sudo net-tools curl nmap tcpdump htop atop mtr vlan ethtool apt-transport-https ca-certificates gnupg gnupg2 gnupg1 ruby mc bmon vlan ifenslave-2.6
+	apt install -y --no-install-recommends psmisc git git-core make cmake zlib1g-dev liblua5.1-dev libpcre3-dev build-essential libssl-dev libsnmp-dev linux-headers-`uname -r`
+	apt install -y --no-install-recommends virt-what dh-autoreconf libexpat1-dev telnet ntpdate ipset unzip sqlite3 libsqlite3-dev libperl-dev iptraf conntrack linux-perf neofetch nftables 
+
+
+
+
+mkdir -p /usr/local/src/accel/build
+cd /usr/local/src/accel
+git clone https://github.com/xebd/accel-ppp.git
+cd /usr/local/src/accel/build
+
+cmake \
+-DCPACK_TYPE=Debian9 \
+-DBUILD_IPOE_DRIVER=TRUE \
+-DBUILD_VLAN_MON_DRIVER=TRUE \
+-DRADIUS=TRUE \
+-DNETSNMP=TRUE \
+-DCMAKE_BUILD_TYPE=Debug \
+-DCMAKE_INSTALL_PREFIX=/usr \
+-DKDIR=/usr/src/linux-headers-$(uname -r) \
+../accel-ppp
+
+make
+
+cp drivers/ipoe/driver/ipoe.ko /lib/modules/$(uname -r)
+cp drivers/vlan_mon/driver/vlan_mon.ko /lib/modules/$(uname -r)
+depmod -a
+modprobe  vlan_mon
+modprobe  ipoe
+
+echo "vlan_mon" >> /etc/modules
+echo "ipoe" >> /etc/modules
+cpack -G DEB
+apt install ./accel-ppp.deb
+systemctl enable accel-ppp
+cp /etc/accel-ppp.conf.dist  /etc/accel-ppp.conf
+/etc/init.d/accel-ppp restart
+
+
+echo
+echo -e "FIM FIM FIM"
+echo
+
+
+
+
+
+
+exit
+
+
+
 
 #Preparação
 #------------------------------------------------
@@ -35,10 +85,11 @@
 	/etc/init.d/frr restart
 	
 	
+	
 #Instalando SNMP
 #------------------------------------------------
-	unzip /usr/local/src/cli-ipoe/others/net-snmp-5.8.1.pre2.zip -d /usr/local/src/
-	cd /usr/local/src/net-snmp-5.8.1.pre2
+	unzip /usr/local/src/cli-ipoe/others/net-snmp-5.8.zip -d /usr/local/src/
+	cd /usr/local/src/net-snmp-5.8
 	./configure --with-default-snmp-version="2" --with-sys-contact="noc" --with-sys-location="noc" --with-logfile="/var/log/snmpd.log" --with-persistent-directory="/var/net-snmp" --exec_prefix=/usr --prefix=/usr
 	make
 	make install
@@ -47,40 +98,33 @@
 	chmod +x /etc/init.d/snmpd
 	update-rc.d snmpd defaults
 
-
 #Instalando Accel-ppp
 #------------------------------------------------
-	mkdir -p /usr/local/src/accel-ppp-build
+	mkdir -p cd /usr/local/src/accel-ppp-build
 	git clone git://git.code.sf.net/p/accel-ppp/code /usr/local/src/accel-ppp-code
 
 	cd /usr/local/src/accel-ppp-build
 	cmake -DCMAKE_INSTALL_PREFIX=/usr -DCPACK_TYPE=Debian9 -DKDIR=/usr/src/linux-headers-`uname -r` -DBUILD_DRIVER=FALSE -DRADIUS=TRUE -DNETSNMP=TRUE -DSHAPER=TRUE -DLOG_PGSQL=FALSE -DLUA=TRUE -DBUILD_IPOE_DRIVER=TRUE -DBUILD_VLAN_MON_DRIVER=TRUE ../accel-ppp-code
-
 	make
-	cp drivers/ipoe/driver/ipoe.ko /usr/lib/
-	cp drivers/vlan_mon/driver/vlan_mon.ko /usr/lib/
-	depmod -a
-	#modprobe vlan_mon
-	#modprobe ipoe
-	cpack -G DEB
-	apt install ./accel-ppp.deb
-	systemctl enable accel-ppp
+	make install
+	
+	cp /usr/local/src/net-snmp-5.8/mibs/* /usr/share/snmp/mibs/
 	
 	#dicionarios
-	cp /usr/local/src/accel-ppp-code/accel-pppd/extra/net-snmp/ACCEL-PPP-MIB.txt /usr/share/snmp/mibs/
-	cp /usr/local/src/net-snmp-5.8.1.pre2/mibs/* /usr/share/snmp/mibs/
-	cp /usr/local/src/cli-ipoe/dictionary/dictionary.accel /usr/share/accel-ppp/radius/
 	cp /usr/local/src/cli-ipoe/dictionary/dictionary.mikrotik /usr/share/accel-ppp/radius/
 	cp /usr/local/src/cli-ipoe/dictionary/dictionary.rfc6911 /usr/share/accel-ppp/radius/
-
-	echo '$INCLUDE dictionary.rfc6911' >> /usr/share/accel-ppp/radius/dictionary
-	echo '$INCLUDE dictionary.mikrotik' >> /usr/share/accel-ppp/radius/dictionary
-	echo '$INCLUDE dictionary.accel' >> /usr/share/accel-ppp/radius/dictionary
+	cat /usr/local/src/cli-ipoe/dictionary/dictionary.custom >> /usr/share/accel-ppp/radius/dictionary
+	
 
 	mkdir -p /var/log/accel-ppp
 	chmod -R a+rwX /var/log/accel-ppp
 	chmod -R a+rwX /var/log/accel-ppp/*
 
+	mkdir -p /lib/modules/`uname -r`/accel
+	cp /usr/local/src/accel-ppp-build/drivers/ipoe/driver/ipoe.ko /lib/modules/`uname -r`/accel/
+	cp /usr/local/src/accel-ppp-build/drivers/vlan_mon/driver/vlan_mon.ko /lib/modules/`uname -r`/accel/
+	
+	cp /usr/local/src/accel-ppp-code/accel-pppd/extra/net-snmp/ACCEL-PPP-MIB.txt /usr/share/snmp/mibs/
 
 	echo "ipv6" >> /etc/modules
 	echo "ipoe" >> /etc/modules
@@ -89,31 +133,62 @@
 	echo "bonding" >> /etc/modules
 	echo "dummy" >> /etc/modules
 
+	depmod -a
+		ipoe
+	modprobe vlan_mon
+
+	chmod +x /etc/init.d/accel-ppp
+	update-rc.d accel-ppp defaults
+	
+	systemctl is-enabled accel-ppp.service
+	systemctl enable accel-ppp.service
+
 #Log Rotativo do Accel-ppp
 #------------------------------------------------
 	(
-		echo '/var/log/accel-ppp/*.log {'
-		echo '		size 50M'
-		echo '		missingok'
-		echo '		rotate 10'
-		echo '		sharedscripts'
-		echo '		postrotate'
-		echo '		test -r /var/run/accel-ppp.pid && kill -HUP `cat /var/run/accel-ppp.pid`'
-		echo '		endscript'
-		echo '}'
+		echo "/var/log/accel-ppp/*.log {"
+		echo "		size 50M"
+		echo "        missingok"
+		echo "		rotate 10"
+		echo "        sharedscripts"
+		echo "        postrotate"
+		echo "                test -r /var/run/accel-ppp.pid && kill -HUP `cat /var/run/accel-ppp.pid`"
+		echo "        endscript"
+		echo "}"
 	) > /etc/logrotate.d/accel-ppp
+
+	mkdir -p /var/log/accel-ppp
+
 
 #Otimizando
 #------------------------------------------------
 	(
 		echo "net.ipv4.ip_forward=1"
+		echo "net.ipv6.conf.all.forwarding=1"
 		echo "net.ipv4.neigh.default.gc_thresh1 = 4096"
 		echo "net.ipv4.neigh.default.gc_thresh2 = 8192"
 		echo "net.ipv4.neigh.default.gc_thresh3 = 12288"
-		echo "net.ipv6.conf.all.forwarding=1"
-		echo "net.ipv6.neigh.default.gc_thresh1 = 4096"
-		echo "net.ipv6.neigh.default.gc_thresh2 = 8192"
-		echo "net.ipv6.neigh.default.gc_thresh3 = 12288"
+		echo "net.ipv4.netfilter.ip_conntrack_max=1572864"
+		
+		echo "net.netfilter.nf_conntrack_max = 1572864"
+		echo "net.netfilter.nf_conntrack_generic_timeout = 60"
+		echo "net.netfilter.nf_conntrack_tcp_timeout_syn_sent = 15"
+		echo "net.netfilter.nf_conntrack_tcp_timeout_syn_recv = 30"
+		echo "net.netfilter.nf_conntrack_tcp_timeout_established = 600"
+		echo "net.netfilter.nf_conntrack_tcp_timeout_fin_wait = 30"
+		echo "net.netfilter.nf_conntrack_tcp_timeout_close_wait = 20"
+		echo "net.netfilter.nf_conntrack_tcp_timeout_last_ack = 30"
+		echo "net.netfilter.nf_conntrack_tcp_timeout_time_wait = 30"
+		echo "net.netfilter.nf_conntrack_tcp_timeout_close = 10"
+		echo "net.netfilter.nf_conntrack_tcp_timeout_max_retrans = 300"
+		echo "net.netfilter.nf_conntrack_tcp_timeout_unacknowledged = 300"
+		echo "net.netfilter.nf_conntrack_udp_timeout = 30"
+		echo "net.netfilter.nf_conntrack_udp_timeout_stream = 180"
+		echo "#net.netfilter.nf_conntrack_icmpv6_timeout = 30"
+		echo "net.netfilter.nf_conntrack_icmp_timeout = 10"
+		echo "net.netfilter.nf_conntrack_events_retry_timeout = 15"
+		echo "net.netfilter.nf_conntrack_checksum=0"
+		echo "net.ipv4.netfilter.ip_conntrack_checksum=0"
 		echo "net.core.dev_weight = 16"
 		echo "net.core.netdev_budget = 256"
 		echo "net.core.netdev_max_backlog = 16000"
@@ -121,6 +196,8 @@
 		echo "vm.dirty_background_ratio = 5"
 		echo "vm.dirty_ratio = 10"
 	) >> /etc/sysctl.conf
+
+	echo "options nf_conntrack hashsize=1193572" > /etc/modprobe.d/nf_conntrack.conf
 
 	echo "100     accel/ipoe"  >> /etc/iproute2/rt_protos
 	echo "101     PBR_1"  >> /etc/iproute2/rt_tables	
@@ -136,7 +213,6 @@
 
 # CRONTAB
 #------------------------------------------------
-	sed -i 's/#cron./cron./' /etc/rsyslog.conf
     clist="/tmp/clist"
     mkdir -p /etc/cron.hourly
     mkdir -p /etc/cron.daily
@@ -152,10 +228,16 @@
 
     # PATH
     echo "PATH=/usr/sbin:/usr/bin:/sbin:/bin" >> $clist
+
+    # hora
     echo "0   *   *   *   *   /bin/run-parts --regex '.*' /etc/cron.hourly" >> $clist
+    # dia
     echo "0   2   *   *   *   /bin/run-parts --regex '.*' /etc/cron.daily" >> $clist
+    # semana
     echo "0   3   *   *   6   /bin/run-parts --regex '.*' /etc/cron.weekly" >> $clist
+    # mes
     echo "0   5   1   *   *   /bin/run-parts --regex '.*' /etc/cron.monthly" >> $clist
+    # minutos 1 5 10 15 30
     for min in 1 5 10 15 30; do
 	echo "*/$min   *   *   *   *   /bin/run-parts --regex '.*' /etc/cron.${min}min" >> $clist
     done
@@ -199,11 +281,9 @@
 
     # Backup automatico Google Drive
 	mv /usr/local/src/cli-ipoe/others/backup_to_gdrive.sh /etc/cron.daily/
-	chmod +x /etc/cron.daily/backup_to_gdrive.sh
+   chmod +x /etc/cron.daily/backup_to_gdrive.sh
 	
-	#kexec-reboot
-	mv /usr/local/src/cli-ipoe/others/reboot2 /usr/bin/
-	chmod +x /usr/bin/reboot2
+	
 
 #Configurando NTP Client
 #------------------------------------------------
@@ -218,9 +298,9 @@
 
 #Instalar klish
 #------------------------------------------------
-	unzip /usr/local/src/cli-ipoe/others/klish-2.2.0.zip -d /usr/local/src/
-	cd /usr/local/src/klish
-	
+	cd /usr/local/src
+	git clone https://src.libcode.org/klish
+	cd klish
 	sed -i 's/bool_t lockless = BOOL_FALSE/bool_t lockless = BOOL_TRUE/g' /usr/local/src/klish/bin/clish.c
 	sed -i '/sigset_t sigpipe_set;/a xml_path = \"/etc/clish\";' /usr/local/src/klish/bin/clish.c
 	
@@ -248,23 +328,21 @@
 	mv /usr/local/src/cli-ipoe/configs/snmp/ /system/configs
 	
 	chmod +x /system/clish/bin/*
-		
+	
 	rm -rf /etc/snmp/snmpd.conf	
 	ln -s /system/configs/snmp/snmpd.conf /etc/snmp/	
 	
 	ln -s /system/configs/accel-ppp/* /etc/ 
 	ln -s /system/clish /etc/
 
-	rm /etc/nftables.conf
-	ln -s /system/firewall/nftables.conf /etc/ 
-
-	#mv /usr/local/src/cli-ipoe/others/net-snmp-ignore-if /sbin/
-	#chmod +x /sbin/net-snmp-ignore-if
+	mv /usr/local/src/cli-ipoe/others/net-snmp-ignore-if /sbin/
+	chmod +x /sbin/net-snmp-ignore-if
 	
 	mv /usr/local/src/cli-ipoe/scripts /system/
 	chmod +x /system/scripts/*
 	
-	ln -s /system/clish/bin/run-command.sh /usr/local/bin/run-command	
+	
+	
 
 
 #Configurando rc.local
@@ -288,15 +366,11 @@
 
 
 	(
-		echo '#!/bin/sh'
+		echo '#!/bin/sh -e'
 		echo
 		echo 'sleep 5'
 		echo "ifconfig eno1 up"
 		echo "ifconfig eno2 up"
-		echo ''
-		echo 'killall irqbalance'
-		echo 'sleep 3'
-		echo ''
 		echo '/system/scripts/irq_affinity.sh -X 0-7 eno1'
 		echo '/system/scripts/irq_affinity.sh -X 8-15 eno2'
 		echo '/system/scripts/ethtool.sh eno1'
@@ -346,6 +420,7 @@
 		echo "#    / _ \| |  | |   |  _| | |   _____| |_) | |_) | |_) | #"
 		echo "#   / ___ \ |__| |___| |___| |__|_____|  __/|  __/|  __/  #"
 		echo "#  /_/   \_\____\____|_____|_____|    |_|   |_|   |_|     #"
+		echo "#                                                         #"
 		echo "#                                                         #"
 		echo "#               Nome Provedor - JSG PPPoE 01              #"
 		echo "#        Voce esta entrando em uma area restrita.         #"
